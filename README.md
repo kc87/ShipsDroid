@@ -7,3 +7,7 @@ Android Project: P2P Battleship Game using Wifi-Direct
 * Using Wifi-Direct on Data Link Layer
 * English / German language supported 
 * Deveolpment time: ca. 40 houres
+
+## Screenshot
+
+![alt tag](docs/shipsdroid.png)
