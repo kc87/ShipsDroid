@@ -4,7 +4,8 @@ Android Project: P2P Battleship Game using Wifi-Direct
 
 ## Some Notes
 
-* This is free and open software developed for **research and educational purposes** only
+* This is free and open software developed for **research and educational** purposes only
+* Two player p2p battleship game
 * Based on Battleship (Swing desktop version)
 * Using Wifi-Direct on Data Link Layer
 * English / German language supported
