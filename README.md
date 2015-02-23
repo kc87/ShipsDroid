@@ -4,7 +4,7 @@ Android Project: P2P Battleship Game using Wifi-Direct
 
 ## Main purpose
 
-Test Wifi-Direct as an alternative to Bluetooth to connect two or more Android Phones
+Test Wifi-Direct as an alternative to Bluetooth to connect two or more Android Phones directly
 
 ## Some Notes
 
