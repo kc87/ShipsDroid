@@ -2,6 +2,10 @@
 
 Android Project: P2P Battleship Game using Wifi-Direct
 
+## Main purpose
+
+Test Wifi-Direct as an alternative to Bluetooth to connect two or more Android Phones
+
 ## Some Notes
 
 * This is free and open software developed for **research and educational** purposes only
@@ -10,7 +14,16 @@ Android Project: P2P Battleship Game using Wifi-Direct
 * Using Wifi-Direct on Data Link Layer
 * English / German language supported
 * Tested width Android 4.4.4 (API Level 19)
-* Deveolpment time: ca. 40 houres
+* Development time: ca. 40 houres
+
+## TODO
+
+* Game Settings Activity
+  * Bluetooth as fallback option if Wifi-Direct isn't supported or doesn't work 
+  * ShotClock timeout
+  * other settings
+
+* Landscape layout for tablet use
 
 ## Screenshot
 
