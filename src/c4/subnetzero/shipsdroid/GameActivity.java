@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import c4.subnetzero.shipsdroid.controller.GameEngine;
 import c4.subnetzero.shipsdroid.p2p.P2pService;
 import c4.subnetzero.shipsdroid.view.EnemyFleetView;
@@ -203,24 +204,21 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
             break;
          case UPDATE_GAME_MENU:
             switch (mGameEngine.getStateName()) {
+               case "Disconnected":
+                  // Connect,New,Pause,Resume,Abort
+                  setMenuItemVisibility(true,false,false,false,false);
+                  break;
                case "PeerReady":
-                  mMenu.findItem(R.id.connect_peer).setVisible(false);
-                  mMenu.findItem(R.id.new_game).setVisible(true);
-                  mMenu.findItem(R.id.pause_game).setVisible(false);
-                  mMenu.findItem(R.id.resume_game).setVisible(false);
-                  mMenu.findItem(R.id.abort_game).setVisible(false);
+                  // Connect,New,Pause,Resume,Abort
+                  setMenuItemVisibility(false,true,false,false,false);
                   break;
                case "Playing":
-                  mMenu.findItem(R.id.new_game).setVisible(false);
-                  mMenu.findItem(R.id.pause_game).setVisible(true);
-                  mMenu.findItem(R.id.resume_game).setVisible(false);
-                  mMenu.findItem(R.id.abort_game).setVisible(true);
+                  // Connect,New,Pause,Resume,Abort
+                  setMenuItemVisibility(false,false,true,false,true);
                   break;
                case "Paused":
-                  mMenu.findItem(R.id.new_game).setVisible(false);
-                  mMenu.findItem(R.id.pause_game).setVisible(false);
-                  mMenu.findItem(R.id.resume_game).setVisible(true);
-                  mMenu.findItem(R.id.abort_game).setVisible(true);
+                  // Connect,New,Pause,Resume,Abort
+                  setMenuItemVisibility(false,false,false,true,true);
                   break;
                default:
                   break;
@@ -237,6 +235,7 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
                case CONNECTING:
                   //case UNREACHABLE:
                   stateDrawable = getResources().getDrawable(R.drawable.state_yellow_bg);
+                  Toast.makeText(this,"Trying " + mP2pService.getPeerName(),Toast.LENGTH_SHORT).show();
                   break;
                case DISCONNECTED:
                   stateDrawable = getResources().getDrawable(R.drawable.state_red_bg);
@@ -244,6 +243,7 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
                case CONNECTED:
                   stateDrawable = getResources().getDrawable(R.drawable.state_green_bg);
                   mUiHandler.sendEmptyMessage(GameActivity.UPDATE_GAME_MENU);
+                  Toast.makeText(this,"Connected to " + mP2pService.getPeerName(),Toast.LENGTH_LONG).show();
                   break;
                default:
                   stateDrawable = getResources().getDrawable(R.drawable.state_gray_bg);
@@ -352,6 +352,15 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
          mGameEngine.setModelUpdateListener(mOwnFleetView, mEnemyFleetView);
       }
 
+   }
+
+   private void setMenuItemVisibility(final boolean... isVisibleList)
+   {
+      mMenu.findItem(R.id.connect_peer).setVisible(isVisibleList[0]);
+      mMenu.findItem(R.id.new_game).setVisible(isVisibleList[1]);
+      mMenu.findItem(R.id.pause_game).setVisible(isVisibleList[2]);
+      mMenu.findItem(R.id.resume_game).setVisible(isVisibleList[3]);
+      mMenu.findItem(R.id.abort_game).setVisible(isVisibleList[4]);
    }
 
    private void quitApp()
