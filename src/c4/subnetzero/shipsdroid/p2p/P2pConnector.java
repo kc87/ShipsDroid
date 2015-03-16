@@ -29,6 +29,7 @@ public abstract class P2pConnector
    public abstract void stop();
    public abstract void connectPeer();
    public abstract void disconnectPeer();
+   public abstract String getPeerName();
    public abstract void sendString(final String msgStr);
 
    public State getState()
@@ -54,14 +55,12 @@ public abstract class P2pConnector
       mListener.onStateChanged(mState);
    }
 
-
    protected void parsePacket(String msgStr)
    {
       Gson gson = new GsonBuilder().serializeNulls().create();
 
       try {
          msgStr = msgStr.trim();
-         //Log.d(LOG_TAG, "RX: " + msgStr);
          Message newMsg = gson.fromJson(msgStr, Message.class);
          mListener.onMessage(newMsg);
       } catch (JsonSyntaxException e) {
