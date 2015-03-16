@@ -58,6 +58,11 @@ public class P2pService extends Service implements P2pConnector.Listener
       }
    }
 
+   public String getPeerName()
+   {
+      return mP2pConnector.getPeerName();
+   }
+
    public P2pConnector.State getState()
    {
       return mP2pConnector.getState();
@@ -94,7 +99,6 @@ public class P2pService extends Service implements P2pConnector.Listener
    @Override
    public void onMessage(String newMsg)
    {
-
    }
 
    @Override
