@@ -81,11 +81,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       return currentState.toString();
    }
 
-   public GameState getCurrentStateInstance()
-   {
-      return currentState;
-   }
-
    public ShotClock getShotClock()
    {
       return mShotClock;
