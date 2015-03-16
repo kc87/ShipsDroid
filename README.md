@@ -1,6 +1,6 @@
 # <img src="res/drawable/ic_launcher.png" width="32px" /> ShipsDroid
 
-Android Project: P2P Battleship Game using Wifi-Direct
+Android Project: P2P [Battleship Game](http://en.wikipedia.org/wiki/Battleship_%28game%29) using Wifi-Direct
 
 ## Main purpose
 
@@ -15,13 +15,13 @@ Test Wifi-Direct as an alternative to Bluetooth to connect two or more Android P
 * English / German language supported
 * Tested width Android 4.4.4 (API Level 19)
 * Development time: ca. 40 houres
+* **Bluetooth version on [bluetooth branch](../../tree/bluetooth)** (Works better than Wifi-Direct)
 
 ## TODO
 
 * Game Settings Activity
-  * Bluetooth as fallback option if Wifi-Direct isn't supported or doesn't work 
   * ShotClock timeout
-  * other settings
+  * Other settings
 
 * Landscape layout for tablet use
 
