@@ -34,4 +34,5 @@
     <string name="aborted_by_peer_msg">Game aborted by Peer!</string>
     <string name="peer_has_quit_msg">Peer has quit. So do we!</string>
     <string name="peer_is_hidden_msg">Peer is hidden!</string>
+    <string name="connect_peer_menu_item">Connect</string>
 </resources>

@@ -1,8 +1,6 @@
 package c4.subnetzero.shipsdroid.model;
 
 
-import android.util.Log;
-
 public class OwnFleetModel extends AbstractFleetModel
 {
    private static final String LOG_TAG = "OwnFleetModel";
@@ -10,15 +8,13 @@ public class OwnFleetModel extends AbstractFleetModel
    public OwnFleetModel(final ModelUpdateListener updateListener)
    {
       super(updateListener);
-      placeNewFleed();
+      placeNewFleet();
    }
 
    // Update the model based on shoot at i,j
    public Object[] update(final int i, final int j)
    {
       int gridValue = seaGrid[i + 1][j + 1];
-
-      Log.d(LOG_TAG, "gridValue:" + gridValue);
 
       // You hit that before
       if (gridValue < 0 || gridValue == AbstractFleetModel.MISS) {
@@ -33,7 +29,7 @@ public class OwnFleetModel extends AbstractFleetModel
             return new Object[]{AGAIN, null};
          }
 
-         //boom beng:
+         // *Boom Bang*:
          ship.hit();
 
          if (ship.isDestroyed()) {
@@ -57,7 +53,7 @@ public class OwnFleetModel extends AbstractFleetModel
       return new Object[]{MISS, null};
    }
 
-   private void placeNewFleed()
+   private void placeNewFleet()
    {
       while (createFleet() < NUMBER_OF_SHIPS) ;
       listener.onTotalUpdate(this);

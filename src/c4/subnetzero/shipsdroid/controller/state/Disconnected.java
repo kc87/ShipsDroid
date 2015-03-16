@@ -4,24 +4,28 @@ package c4.subnetzero.shipsdroid.controller.state;
 import c4.subnetzero.shipsdroid.R;
 import c4.subnetzero.shipsdroid.Utils;
 import c4.subnetzero.shipsdroid.controller.GameEngine;
-import c4.subnetzero.shipsdroid.p2p.Message;
 
-public class PeerReady extends GameStateAdapter
+public class Disconnected extends GameStateAdapter
 {
+
    private GameEngine mGameEngine = null;
 
-   public PeerReady(final GameEngine engine)
+   public Disconnected(final GameEngine engine)
    {
       mGameEngine = engine;
+   }
+
+
+   @Override
+   public void connectPeer()
+   {
+      mGameEngine.getP2pService().connect();
    }
 
    @Override
    public void newGame()
    {
-      Message newGameMsg = new Message();
-      newGameMsg.TYPE = Message.GAME;
-      newGameMsg.SUB_TYPE = Message.NEW;
-      mGameEngine.getP2pService().sendMessage(newGameMsg);
+      Utils.showOkMsg(mGameEngine.getContext(), R.string.no_player_connected_msg, null);
    }
 
    @Override
@@ -42,4 +46,9 @@ public class PeerReady extends GameStateAdapter
       Utils.showOkMsg(mGameEngine.getContext(), R.string.no_game_running_msg, null);
    }
 
+   @Override
+   public void finishGame()
+   {
+      Utils.showOkMsg(mGameEngine.getContext(), R.string.no_game_running_msg, null);
+   }
 }

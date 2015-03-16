@@ -103,49 +103,4 @@ public class Utils
       });
    }
 
-
-   public static Inet4Address getLocalIpAddress()
-   {
-
-      try {
-         for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
-            NetworkInterface networkInterface = en.nextElement();
-            for (Enumeration<InetAddress> enumIpAddr = networkInterface.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
-               InetAddress inetAddress = enumIpAddr.nextElement();
-               if (!inetAddress.isLoopbackAddress()) {
-                  if (inetAddress instanceof Inet4Address) {
-                     return (Inet4Address)inetAddress;
-                  }
-               }
-            }
-         }
-      } catch (Exception e) {
-         Log.e(LOG_TAG, "getLocalIpAddress()",e);
-      }
-
-      Inet4Address addr = null;
-      try { addr = (Inet4Address)Inet4Address.getByName("1.1.1.1"); } catch (Exception e) {/*IGNORED*/}
-      return addr;
-   }
-
-
-   public static void launchWifiSettings(final Activity activity)
-   {
-      try {
-         Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
-         activity.startActivity(intent);
-         //activity.startActivityForResult(intent,0);
-      } catch (ActivityNotFoundException e) {
-         Log.e(LOG_TAG, "Unable to launch wifi settings activity", e);
-         activity.runOnUiThread(new Runnable()
-         {
-            @Override
-            public void run()
-            {
-               Toast.makeText(activity, "Please enable Wifi", Toast.LENGTH_SHORT).show();
-            }
-         });
-      }
-   }
-
 }

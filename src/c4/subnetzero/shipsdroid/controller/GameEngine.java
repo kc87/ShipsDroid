@@ -4,10 +4,10 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 import c4.subnetzero.shipsdroid.GameActivity;
-import c4.subnetzero.shipsdroid.NetService;
 import c4.subnetzero.shipsdroid.R;
 import c4.subnetzero.shipsdroid.Utils;
-import c4.subnetzero.shipsdroid.controller.state.IGameState;
+import c4.subnetzero.shipsdroid.controller.state.Disconnected;
+import c4.subnetzero.shipsdroid.controller.state.GameState;
 import c4.subnetzero.shipsdroid.controller.state.Paused;
 import c4.subnetzero.shipsdroid.controller.state.PeerReady;
 import c4.subnetzero.shipsdroid.controller.state.Playing;
@@ -15,42 +15,40 @@ import c4.subnetzero.shipsdroid.model.AbstractFleetModel;
 import c4.subnetzero.shipsdroid.model.EnemyFleetModel;
 import c4.subnetzero.shipsdroid.model.OwnFleetModel;
 import c4.subnetzero.shipsdroid.model.Ship;
-import c4.subnetzero.shipsdroid.net.Message;
+import c4.subnetzero.shipsdroid.p2p.Message;
+import c4.subnetzero.shipsdroid.p2p.P2pConnector;
+import c4.subnetzero.shipsdroid.p2p.P2pService;
 import c4.subnetzero.shipsdroid.view.EnemyFleetView;
 
-import java.net.InetAddress;
 import java.util.ArrayList;
 
 
-public final class GameEngine implements NetService.Listener, ShotClock.Listener
+public final class GameEngine implements P2pService.Listener, ShotClock.Listener
 {
    private static final String LOG_TAG = "GameEngine";
    private ShotClock mShotClock;
-   private NetService mNetService;
+   private P2pService mP2pService;
    private Handler mUiHandler;
    private OwnFleetModel ownFleetModel = null;
    private EnemyFleetModel enemyFleetModel = null;
    private AbstractFleetModel.ModelUpdateListener ownFleetModelUpdateListener = null;
    private AbstractFleetModel.ModelUpdateListener enemyFleetModelUpdateListener = null;
-   private StateListener stateListener = null;
-   private ScoreListener scoreListener = null;
    private volatile boolean myTurnFlag = false;
    private boolean mIsHidden = false;
-   private IGameState currentState = new PeerReady(this);
+   private GameState currentState = new Disconnected(this);
    private Context mContext;
 
-   public GameEngine(final Context context, final NetService netService)
+   public GameEngine(final Context context, final P2pService p2pService)
    {
       mContext = context;
-      mNetService = netService;
-      mNetService.setListener(this);
+      mP2pService = p2pService;
+      mP2pService.setListener(this);
 
       if (mContext instanceof GameActivity) {
          mUiHandler = ((GameActivity) mContext).getUiHandler();
       } else {
          throw new IllegalStateException("Called from wrong activity");
       }
-
 
       mShotClock = new ShotClock();
       mShotClock.setListener(this);
@@ -63,22 +61,9 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
       enemyFleetModelUpdateListener = enemy;
    }
 
-   public void setStateListener(final StateListener listener)
-   {
-      stateListener = listener;
-   }
-
-   public void setScoreListener(final ScoreListener listener)
-   {
-      scoreListener = listener;
-   }
-
-   public void setState(final IGameState newState)
+   public void setState(final GameState newState)
    {
       currentState = newState;
-      if (stateListener != null) {
-         stateListener.onStateChange(newState);
-      }
    }
 
    public void setHidden(final boolean isHidden)
@@ -86,9 +71,9 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
       mIsHidden = isHidden;
    }
 
-   public NetService getNetService()
+   public P2pService getP2pService()
    {
-      return mNetService;
+      return mP2pService;
    }
 
    public String getStateName()
@@ -96,7 +81,7 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
       return currentState.toString();
    }
 
-   public IGameState getCurrentStateInstance()
+   public GameState getCurrentStateInstance()
    {
       return currentState;
    }
@@ -109,6 +94,11 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
    public Context getContext()
    {
       return mContext;
+   }
+
+   public void connectPeer()
+   {
+      currentState.connectPeer();
    }
 
    public void newGame()
@@ -139,7 +129,7 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
          bombMsg.TYPE = Message.GAME;
          bombMsg.SUB_TYPE = Message.SHOOT;
          bombMsg.PAYLOAD = new Object[]{i, j};
-         mNetService.sendMessage(bombMsg);
+         mP2pService.sendMessage(bombMsg);
       }
    }
 
@@ -150,12 +140,12 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
       Message quitMsg = new Message();
       quitMsg.TYPE = Message.CTRL;
       quitMsg.SUB_TYPE = Message.PEER_QUIT;
-      mNetService.sendMessage(quitMsg);
+      mP2pService.sendMessage(quitMsg);
    }
 
    // FIXME: This method obviously needs some refactoring ;)
    @Override
-   public void onMessage(Message msg, final String peerId)
+   public void onMessage(Message msg/*, final String peerId*/)
    {
       if (msg.TYPE == Message.CTRL) {
          if (msg.SUB_TYPE == Message.PEER_QUIT) {
@@ -179,7 +169,7 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
          Message hiddenMsg = new Message();
          hiddenMsg.TYPE = Message.CTRL;
          hiddenMsg.SUB_TYPE = Message.PEER_IS_HIDDEN;
-         mNetService.sendMessage(hiddenMsg);
+         mP2pService.sendMessage(hiddenMsg);
          return;
       }
 
@@ -190,7 +180,7 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
                if (msg.SUB_TYPE == Message.RESUME) {
                   if (!msg.ACK_FLAG) {
                      msg.ACK_FLAG = true;
-                     mNetService.sendMessage(msg);
+                     mP2pService.sendMessage(msg);
                   }
                   if (myTurnFlag) {
                      mShotClock.resume();
@@ -203,7 +193,7 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
                if (msg.SUB_TYPE == Message.ABORT) {
                   if (!msg.ACK_FLAG) {
                      msg.ACK_FLAG = true;
-                     mNetService.sendMessage(msg);
+                     mP2pService.sendMessage(msg);
                      Utils.showOkMsg(mContext, R.string.aborted_by_peer_msg, null);
                   } else {
                      Utils.showOkMsg(mContext, R.string.game_aborted_msg, null);
@@ -224,7 +214,7 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
                   myTurnFlag = msg.ACK_FLAG;
                   if (!msg.ACK_FLAG && !msg.RST_FLAG) {
                      msg.ACK_FLAG = true;
-                     mNetService.sendMessage(msg);
+                     mP2pService.sendMessage(msg);
                   }
                   setState(new Playing(this));
                   mUiHandler.sendEmptyMessage(GameActivity.UPDATE_GAME_MENU);
@@ -240,7 +230,7 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
                if (msg.SUB_TYPE == Message.PAUSE) {
                   if (!msg.ACK_FLAG) {
                      msg.ACK_FLAG = true;
-                     mNetService.sendMessage(msg);
+                     mP2pService.sendMessage(msg);
                      Utils.showOkMsg(mContext, R.string.paused_by_peer_msg, null);
                   } else {
                      Utils.showOkMsg(mContext, R.string.game_paused_msg, null);
@@ -263,7 +253,7 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
                if (msg.SUB_TYPE == Message.ABORT) {
                   if (!msg.ACK_FLAG) {
                      msg.ACK_FLAG = true;
-                     mNetService.sendMessage(msg);
+                     mP2pService.sendMessage(msg);
                      Utils.showOkMsg(mContext, R.string.aborted_by_peer_msg, null);
                   } else {
                      Utils.showOkMsg(mContext, R.string.game_aborted_msg, null);
@@ -316,7 +306,7 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
                      msg.ACK_FLAG = true;
                      msg.PAYLOAD = new Object[]{i, j, resultFlag};
                      msg.SHIP = ship;
-                     mNetService.sendMessage(msg);
+                     mP2pService.sendMessage(msg);
 
                      myTurnFlag = !(resultFlag == AbstractFleetModel.HIT || resultFlag == AbstractFleetModel.DESTROYED);
                   }
@@ -337,28 +327,18 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
    }
 
    @Override
-   public void onReachabilityChanged(final boolean reachable)
+   public void onStateChanged(P2pConnector.State newState)
    {
-      mUiHandler.sendEmptyMessage(GameActivity.UPDATE_CONNECTION_STATE);
-   }
+      switch (newState){
+         case CONNECTED:
+            setState(new PeerReady(this));
+            break;
+         case DISCONNECTED:
+            setState(new Disconnected(this));
+            break;
+      }
 
-   @Override
-   public void onPeerReady() {}
-
-   @Override
-   public void onStartDiscovery() {}
-
-
-   @Override
-   public void onConnected(InetAddress serverIp, int serverPort, boolean isGroupOwner)
-   {
-      mUiHandler.sendEmptyMessage(GameActivity.UPDATE_CONNECTION_STATE);
-   }
-
-   @Override
-   public void onDisconnected()
-   {
-      mUiHandler.sendEmptyMessage(GameActivity.UPDATE_CONNECTION_STATE);
+      mUiHandler.sendEmptyMessage(GameActivity.STATE_CHANGED);
    }
 
 
@@ -404,7 +384,7 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
       Message timeoutMsg = new Message();
       timeoutMsg.TYPE = Message.GAME;
       timeoutMsg.SUB_TYPE = Message.TIMEOUT;
-      mNetService.sendMessage(timeoutMsg);
+      mP2pService.sendMessage(timeoutMsg);
    }
 
    @Override
@@ -414,17 +394,6 @@ public final class GameEngine implements NetService.Listener, ShotClock.Listener
       msg.what = GameActivity.UPDATE_SHOT_CLOCK;
       msg.arg1 = tick;
       mUiHandler.sendMessage(msg);
-   }
-
-
-   public interface StateListener
-   {
-      public void onStateChange(final IGameState newState);
-   }
-
-   public interface ScoreListener
-   {
-      public void onScoreUpdate(final int myShips, final int enemyShips);
    }
 
 }

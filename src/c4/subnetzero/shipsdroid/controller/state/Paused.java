@@ -4,7 +4,7 @@ package c4.subnetzero.shipsdroid.controller.state;
 import c4.subnetzero.shipsdroid.R;
 import c4.subnetzero.shipsdroid.Utils;
 import c4.subnetzero.shipsdroid.controller.GameEngine;
-import c4.subnetzero.shipsdroid.net.Message;
+import c4.subnetzero.shipsdroid.p2p.Message;
 
 public class Paused extends GameStateAdapter
 {
@@ -34,7 +34,7 @@ public class Paused extends GameStateAdapter
       Message abortGameMsg = new Message();
       abortGameMsg.TYPE = Message.GAME;
       abortGameMsg.SUB_TYPE = Message.RESUME;
-      mGameEngine.getNetService().sendMessage(abortGameMsg);
+      mGameEngine.getP2pService().sendMessage(abortGameMsg);
    }
 
    @Override
@@ -43,6 +43,6 @@ public class Paused extends GameStateAdapter
       Message abortGameMsg = new Message();
       abortGameMsg.TYPE = Message.GAME;
       abortGameMsg.SUB_TYPE = Message.ABORT;
-      mGameEngine.getNetService().sendMessage(abortGameMsg);
+      mGameEngine.getP2pService().sendMessage(abortGameMsg);
    }
 }

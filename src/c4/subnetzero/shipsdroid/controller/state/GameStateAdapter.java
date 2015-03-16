@@ -1,9 +1,14 @@
 package c4.subnetzero.shipsdroid.controller.state;
 
-public abstract class GameStateAdapter implements IGameState
+public abstract class GameStateAdapter implements GameState
 {
    private static final String LOG_TAG = "GameStateAdapter";
    private static final boolean LOG_STATE_TRANSITION = false;
+
+   @Override
+   public void connectPeer()
+   {
+   }
 
    @Override
    public void newGame()
@@ -39,10 +44,6 @@ public abstract class GameStateAdapter implements IGameState
    @Override
    public boolean equals(Object o)
    {
-      if (o instanceof IGameState) {
-         return this.toString().equals(o.toString());
-      }
-
-      return false;
+      return o instanceof GameState && this.toString().equals(o.toString());
    }
 }

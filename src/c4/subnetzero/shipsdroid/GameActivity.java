@@ -4,6 +4,7 @@ package c4.subnetzero.shipsdroid;
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -24,21 +25,22 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import c4.subnetzero.shipsdroid.controller.GameEngine;
+import c4.subnetzero.shipsdroid.p2p.P2pService;
 import c4.subnetzero.shipsdroid.view.EnemyFleetView;
 import c4.subnetzero.shipsdroid.view.GridButtonHandler;
 import c4.subnetzero.shipsdroid.view.OwnFleetView;
 
 public class GameActivity extends Activity implements Handler.Callback, ServiceConnection
 {
-
    private static final String LOG_TAG = "GameActivity";
+   private static final int REQUEST_ENABLE_BT = 1;
 
    private Handler mUiHandler;
    private Menu mMenu;
    private EnemyFleetView mEnemyFleetView;
    private OwnFleetView mOwnFleetView;
    private GameEngine mGameEngine;
-   private NetService mNetService;
+   private P2pService mP2pService;
    private GridButtonHandler mGridButtonHandler;
    private TextView mShotClockView;
    private TextView mEnemyShipsView;
@@ -49,7 +51,7 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
    public static final int UPDATE_SHOT_CLOCK = 1;
    public static final int UPDATE_SCORE_BOARD = 2;
    public static final int UPDATE_GAME_MENU = 3;
-   public static final int UPDATE_CONNECTION_STATE = 4;
+   public static final int STATE_CHANGED = 4;
    public static final int PEER_QUIT_APP = 5;
 
    @Override
@@ -148,7 +150,6 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
 
       if (mEnemyFleetView == null) {
          buildGameBoard();
-         mUiHandler.sendEmptyMessageDelayed(UPDATE_CONNECTION_STATE, 2000);
       }
    }
 
@@ -165,6 +166,9 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
    public boolean onOptionsItemSelected(MenuItem item)
    {
       switch (item.getItemId()) {
+         case R.id.connect_peer:
+            mGameEngine.connectPeer();
+            break;
          case R.id.new_game:
             mGameEngine.newGame();
             break;
@@ -200,6 +204,7 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
          case UPDATE_GAME_MENU:
             switch (mGameEngine.getStateName()) {
                case "PeerReady":
+                  mMenu.findItem(R.id.connect_peer).setVisible(false);
                   mMenu.findItem(R.id.new_game).setVisible(true);
                   mMenu.findItem(R.id.pause_game).setVisible(false);
                   mMenu.findItem(R.id.resume_game).setVisible(false);
@@ -221,18 +226,24 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
                   break;
             }
             break;
-         case UPDATE_CONNECTION_STATE:
+         case STATE_CHANGED:
             Drawable stateDrawable;
-            switch (mNetService.getState()) {
-               case CONNECTED:
-               case UNREACHABLE:
+            switch (mP2pService.getState()) {
+               case DISABLED:
+                  stateDrawable = getResources().getDrawable(R.drawable.state_gray_bg);
+                  Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                  startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+                  break;
+               case CONNECTING:
+                  //case UNREACHABLE:
                   stateDrawable = getResources().getDrawable(R.drawable.state_yellow_bg);
                   break;
                case DISCONNECTED:
                   stateDrawable = getResources().getDrawable(R.drawable.state_red_bg);
                   break;
-               case REACHABLE:
+               case CONNECTED:
                   stateDrawable = getResources().getDrawable(R.drawable.state_green_bg);
+                  mUiHandler.sendEmptyMessage(GameActivity.UPDATE_GAME_MENU);
                   break;
                default:
                   stateDrawable = getResources().getDrawable(R.drawable.state_gray_bg);
@@ -245,21 +256,30 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
          default:
             /* EMPTY */
             break;
-
       }
       return true;
    }
 
    @Override
+   protected void onActivityResult(int requestCode, int resultCode, Intent intent)
+   {
+      if (requestCode == REQUEST_ENABLE_BT) {
+         mP2pService.start();
+      }
+   }
+
+
+   @Override
    public void onServiceConnected(ComponentName name, IBinder service)
    {
       Log.d(LOG_TAG, "onServiceConnected()");
-      mNetService = ((NetService.LocalBinder) service).getService();
+      mP2pService = ((P2pService.LocalBinder) service).getService();
 
-      mGameEngine = new GameEngine(this, mNetService);
+      mGameEngine = new GameEngine(this, mP2pService);
       mGameEngine.setModelUpdateListener(mOwnFleetView, mEnemyFleetView);
 
       mGridButtonHandler.setGameEngine(mGameEngine);
+      mP2pService.start();
    }
 
 
@@ -268,7 +288,7 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
    public void onServiceDisconnected(ComponentName name)
    {
       Log.d(LOG_TAG, "onServiceDisconnected(): Service has crashed!!");
-      mNetService = null;
+      mP2pService = null;
    }
 
 
@@ -300,7 +320,7 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
       }
 
       mGridButtonHandler = new GridButtonHandler(this);
-      bindService(new Intent(this, NetService.class), this, BIND_AUTO_CREATE);
+      bindService(new Intent(this, P2pService.class), this, BIND_AUTO_CREATE);
    }
 
    private void buildGameBoard()
@@ -336,8 +356,8 @@ public class GameActivity extends Activity implements Handler.Callback, ServiceC
 
    private void quitApp()
    {
-      if (mNetService != null) {
-         mNetService.setListener(null);
+      if (mP2pService != null) {
+         mP2pService.setListener(null);
       }
 
       if (mGameEngine != null) {

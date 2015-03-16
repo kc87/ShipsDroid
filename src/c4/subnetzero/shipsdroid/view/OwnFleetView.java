@@ -41,7 +41,6 @@ public class OwnFleetView extends AbstractFleetView
       // Ship is partially damaged
       if (gridValue < 0) {
          gridButtons[i][j].setBackground(mDrawableMap.get("HIT"));
-         return;
       }
    }
 }

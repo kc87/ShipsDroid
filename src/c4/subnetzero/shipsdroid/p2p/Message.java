@@ -1,4 +1,4 @@
-package c4.subnetzero.shipsdroid.net;
+package c4.subnetzero.shipsdroid.p2p;
 
 import c4.subnetzero.shipsdroid.model.Ship;
 
