@@ -19,6 +19,7 @@ public class BtConnector extends P2pConnector
 {
    private static final String LOG_TAG = "BtConnector";
    private static final String UUID_STRING = "069c9397-7da9-4810-849c-f52f6b1dead";
+   private final Object mWaitLock = new Object();
    private BluetoothAdapter mBluetoothAdapter;
    private BluetoothDevice mRemoteDevice;
    private volatile AcceptThread mAcceptThread;
@@ -32,36 +33,34 @@ public class BtConnector extends P2pConnector
       mState = State.DISABLED;
    }
 
-   public boolean isBtEnabled()
-   {
-      return mBluetoothAdapter != null && mBluetoothAdapter.isEnabled();
-   }
-
-   public void startDiscovery()
-   {
-      if (mBluetoothAdapter != null && !mBluetoothAdapter.isDiscovering()) {
-         mBluetoothAdapter.startDiscovery();
-      }
-   }
-
-   public void stopDiscovery()
-   {
-      if (mBluetoothAdapter != null) {
-         mBluetoothAdapter.cancelDiscovery();
-      }
-   }
-
    @Override
    public void connectPeer()
    {
-      if (mRemoteDevice == null) {
-         mRemoteDevice = findRemoteDevice();
-      }
+      new Thread(new Runnable()
+      {
+         @Override
+         public void run()
+         {
+            final Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
 
-      if (mRemoteDevice != null && mState == State.DISCONNECTED && mConnectThread == null) {
-         mConnectThread = new ConnectThread(mRemoteDevice);
-         mConnectThread.start();
-      }
+            if (pairedDevices.size() > 0) {
+               for (BluetoothDevice device : pairedDevices) {
+                  if (mState == State.DISCONNECTED && mConnectThread == null) {
+                     mConnectThread = new ConnectThread(device);
+                     mConnectThread.start();
+                     synchronized (mWaitLock){
+                        try {
+                           mWaitLock.wait();
+                        } catch (InterruptedException e) {
+                           /* IGNORED */
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }).start();
+
    }
 
 
@@ -96,7 +95,7 @@ public class BtConnector extends P2pConnector
    public void start()
    {
       setup();
-      if(mState != State.DISABLED) {
+      if (mState != State.DISABLED) {
          startAcceptThread();
       }
    }
@@ -109,9 +108,14 @@ public class BtConnector extends P2pConnector
       if (mAcceptThread != null) {
          mAcceptThread.close();
       }
-
-      stopDiscovery();
    }
+
+   @Override
+   public String getPeerName()
+   {
+      return mRemoteDevice != null ? mRemoteDevice.getName() : "N/A";
+   }
+
 
    public void startAcceptThread()
    {
@@ -136,27 +140,9 @@ public class BtConnector extends P2pConnector
 
       if (!mBluetoothAdapter.isEnabled()) {
          setState(State.DISABLED);
-      }else {
+      } else {
          setState(State.DISCONNECTED);
       }
-   }
-
-   private BluetoothDevice findRemoteDevice()
-   {
-      BluetoothDevice remoteDevice = null;
-      Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-
-      if (pairedDevices.size() > 0) {
-         for (BluetoothDevice device : pairedDevices) {
-            if (!device.getAddress().equals("00:00:DE:AD:BE:EF")) {
-               Log.d(LOG_TAG,"Remote Device: "+device.getAddress());
-               remoteDevice = device;
-               break;
-            }
-         }
-      }
-
-      return remoteDevice;
    }
 
    private class ConnectThread extends Thread
@@ -167,7 +153,7 @@ public class BtConnector extends P2pConnector
 
       public ConnectThread(final BluetoothDevice bluetoothDevice)
       {
-         BluetoothSocket tmp = null;
+         BluetoothSocket tmp;
          mmDevice = bluetoothDevice;
 
          try {
@@ -183,22 +169,23 @@ public class BtConnector extends P2pConnector
       @Override
       public void run()
       {
-         if (mmSocket == null) {
-            mConnectThread = null;
-            return;
-         }
+         Log.d(LOG_TAG,"Connecting to device: "+mmDevice.getName());
 
          try {
+            mRemoteDevice = mmDevice;
             setState(BtConnector.State.CONNECTING);
             mmSocket.connect();
          } catch (Exception e) {
             Log.e(LOG_TAG, e.getMessage());
             setState(BtConnector.State.DISCONNECTED);
             close();
+            synchronized (mWaitLock){
+               mWaitLock.notify();
+            }
             return;
          }
 
-         if(mConnectedThread == null) {
+         if (mConnectedThread == null) {
             setState(BtConnector.State.CONNECTED);
             mConnectedThread = new ConnectedThread(mmSocket);
             mConnectedThread.start();
@@ -214,6 +201,7 @@ public class BtConnector extends P2pConnector
          } catch (IOException e) {
             /* IGNORED */
          } finally {
+            mRemoteDevice = null;
             mConnectThread = null;
          }
       }
@@ -226,7 +214,7 @@ public class BtConnector extends P2pConnector
 
       public AcceptThread()
       {
-         BluetoothServerSocket tmp = null;
+         BluetoothServerSocket tmp;
          try {
             tmp = mBluetoothAdapter.listenUsingRfcommWithServiceRecord(LOG_TAG, UUID.fromString(UUID_STRING));
          } catch (final Exception e) {
@@ -255,7 +243,8 @@ public class BtConnector extends P2pConnector
             return;
          }
 
-         if(mConnectedThread == null) {
+         if (mConnectedThread == null) {
+            mRemoteDevice = connectionSocket.getRemoteDevice();
             setState(BtConnector.State.CONNECTED);
             mConnectedThread = new ConnectedThread(connectionSocket);
             mConnectedThread.start();
@@ -286,8 +275,8 @@ public class BtConnector extends P2pConnector
       public ConnectedThread(BluetoothSocket socket)
       {
          setName(LOG_TAG);
-         InputStream tmpIn = null;
-         OutputStream tmpOut = null;
+         InputStream tmpIn;
+         OutputStream tmpOut;
          mmSocket = socket;
 
          try {
@@ -319,10 +308,9 @@ public class BtConnector extends P2pConnector
             } catch (Exception e) {
                Log.e(LOG_TAG, e.getMessage());
                close();
-               /*
                if (e instanceof IOException) {
                   startAcceptThread();
-               }*/
+               }
                break;
             }
          }
@@ -348,11 +336,9 @@ public class BtConnector extends P2pConnector
             /* IGNORED */
          } finally {
             mConnectedThread = null;
+            mRemoteDevice = null;
             setState(BtConnector.State.DISCONNECTED);
          }
       }
-
    }
-
-
 }
