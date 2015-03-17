@@ -1,9 +1,7 @@
 package c4.subnetzero.shipsdroid.controller;
 
-import android.content.Context;
-import android.os.Handler;
 import android.util.Log;
-import c4.subnetzero.shipsdroid.GameActivity;
+import c4.subnetzero.shipsdroid.GamePresenter;
 import c4.subnetzero.shipsdroid.R;
 import c4.subnetzero.shipsdroid.Utils;
 import c4.subnetzero.shipsdroid.controller.state.Disconnected;
@@ -18,7 +16,6 @@ import c4.subnetzero.shipsdroid.model.Ship;
 import c4.subnetzero.shipsdroid.p2p.Message;
 import c4.subnetzero.shipsdroid.p2p.P2pConnector;
 import c4.subnetzero.shipsdroid.p2p.P2pService;
-import c4.subnetzero.shipsdroid.view.EnemyFleetView;
 
 import java.util.ArrayList;
 
@@ -28,37 +25,21 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
    private static final String LOG_TAG = "GameEngine";
    private ShotClock mShotClock;
    private P2pService mP2pService;
-   private Handler mUiHandler;
    private OwnFleetModel ownFleetModel = null;
    private EnemyFleetModel enemyFleetModel = null;
-   private AbstractFleetModel.ModelUpdateListener ownFleetModelUpdateListener = null;
-   private AbstractFleetModel.ModelUpdateListener enemyFleetModelUpdateListener = null;
    private volatile boolean myTurnFlag = false;
    private boolean mIsHidden = false;
    private GameState currentState = new Disconnected(this);
-   private Context mContext;
+   private GamePresenter mGamePresenter;
 
-   public GameEngine(final Context context, final P2pService p2pService)
+   public GameEngine(final GamePresenter gamePresenter, final P2pService p2pService)
    {
-      mContext = context;
+      mGamePresenter = gamePresenter;
       mP2pService = p2pService;
       mP2pService.setListener(this);
 
-      if (mContext instanceof GameActivity) {
-         mUiHandler = ((GameActivity) mContext).getUiHandler();
-      } else {
-         throw new IllegalStateException("Called from wrong activity");
-      }
-
       mShotClock = new ShotClock();
       mShotClock.setListener(this);
-   }
-
-   public void setModelUpdateListener(final AbstractFleetModel.ModelUpdateListener own,
-                                      final AbstractFleetModel.ModelUpdateListener enemy)
-   {
-      ownFleetModelUpdateListener = own;
-      enemyFleetModelUpdateListener = enemy;
    }
 
    public void setState(final GameState newState)
@@ -84,11 +65,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
    public ShotClock getShotClock()
    {
       return mShotClock;
-   }
-
-   public Context getContext()
-   {
-      return mContext;
    }
 
    public void connectPeer()
@@ -138,23 +114,26 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       mP2pService.sendMessage(quitMsg);
    }
 
+   public void showMsg(final int resourceId)
+   {
+      mGamePresenter.showToast(resourceId);
+   }
+
    // FIXME: This method obviously needs some refactoring ;)
    @Override
-   public void onMessage(Message msg/*, final String peerId*/)
+   public void onMessage(Message msg)
    {
       if (msg.TYPE == Message.CTRL) {
          if (msg.SUB_TYPE == Message.PEER_QUIT) {
             mShotClock.stop();
             setState(new PeerReady(this));
-            if (Utils.sIsDialogOpen) {
-               Utils.closeOkMsg(mContext);
-            }
-            Utils.showToast(mContext, R.string.peer_has_quit_msg);
-            mUiHandler.sendEmptyMessage(GameActivity.PEER_QUIT_APP);
+            mGamePresenter.closeOkDialog();
+            showMsg(R.string.peer_has_quit_msg);
+            mGamePresenter.executeMenuAction(R.id.quit_game_app);
             return;
          }
          if (msg.SUB_TYPE == Message.PEER_IS_HIDDEN) {
-            Utils.showToast(mContext, R.string.peer_is_hidden_msg);
+            showMsg(R.string.peer_is_hidden_msg);
             return;
          }
       }
@@ -181,7 +160,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                      mShotClock.resume();
                   }
                   setState(new Playing(this));
-                  mUiHandler.sendEmptyMessage(GameActivity.UPDATE_GAME_MENU);
+                  mGamePresenter.updateGameState(getStateName());
                   return;
                }
 
@@ -189,14 +168,14 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                   if (!msg.ACK_FLAG) {
                      msg.ACK_FLAG = true;
                      mP2pService.sendMessage(msg);
-                     Utils.showOkMsg(mContext, R.string.aborted_by_peer_msg, null);
+                     showMsg(R.string.aborted_by_peer_msg);
                   } else {
-                     Utils.showOkMsg(mContext, R.string.game_aborted_msg, null);
+                     showMsg(R.string.game_aborted_msg);
                   }
                   setPlayerEnabled(true, false);
                   mShotClock.stop();
                   setState(new PeerReady(this));
-                  mUiHandler.sendEmptyMessage(GameActivity.UPDATE_GAME_MENU);
+                  mGamePresenter.updateGameState(getStateName());
                   return;
                }
             }
@@ -212,7 +191,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                      mP2pService.sendMessage(msg);
                   }
                   setState(new Playing(this));
-                  mUiHandler.sendEmptyMessage(GameActivity.UPDATE_GAME_MENU);
+                  mGamePresenter.updateGameState(getStateName());
                   startNewGame();
                   return;
                }
@@ -226,13 +205,13 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                   if (!msg.ACK_FLAG) {
                      msg.ACK_FLAG = true;
                      mP2pService.sendMessage(msg);
-                     Utils.showOkMsg(mContext, R.string.paused_by_peer_msg, null);
+                     showMsg(R.string.paused_by_peer_msg);
                   } else {
-                     Utils.showOkMsg(mContext, R.string.game_paused_msg, null);
+                     showMsg(R.string.game_paused_msg);
                   }
                   mShotClock.pause();
                   setState(new Paused(this));
-                  mUiHandler.sendEmptyMessage(GameActivity.UPDATE_GAME_MENU);
+                  mGamePresenter.updateGameState(getStateName());
                   return;
                }
 
@@ -240,8 +219,8 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                   setPlayerEnabled(true, false);
                   mShotClock.stop();
                   setState(new PeerReady(this));
-                  mUiHandler.sendEmptyMessage(GameActivity.UPDATE_GAME_MENU);
-                  Utils.showOkMsg(mContext, R.string.game_lose_msg, null);
+                  mGamePresenter.updateGameState(getStateName());
+                  mGamePresenter.showOkDialog(R.string.game_lose_msg);
                   return;
                }
 
@@ -249,14 +228,14 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                   if (!msg.ACK_FLAG) {
                      msg.ACK_FLAG = true;
                      mP2pService.sendMessage(msg);
-                     Utils.showOkMsg(mContext, R.string.aborted_by_peer_msg, null);
+                     showMsg(R.string.aborted_by_peer_msg);
                   } else {
-                     Utils.showOkMsg(mContext, R.string.game_aborted_msg, null);
+                     showMsg(R.string.game_aborted_msg);
                   }
                   setPlayerEnabled(true, false);
                   mShotClock.stop();
                   setState(new PeerReady(this));
-                  mUiHandler.sendEmptyMessage(GameActivity.UPDATE_GAME_MENU);
+                  mGamePresenter.updateGameState(getStateName());
                   return;
                }
 
@@ -284,8 +263,8 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                      if (enemyFleetModel.isFleetDestroyed()) {
                         setScore(ownFleetModel.getShipsLeft(), 0);
                         currentState.finishGame();
-                        mUiHandler.sendEmptyMessage(GameActivity.UPDATE_GAME_MENU);
-                        Utils.showOkMsg(mContext, R.string.game_win_msg, null);
+                        mGamePresenter.updateGameState(getStateName());
+                        mGamePresenter.showOkDialog(R.string.game_win_msg);
                         return;
                      }
 
@@ -333,14 +312,19 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
             break;
       }
 
-      mUiHandler.sendEmptyMessage(GameActivity.STATE_CHANGED);
+      mGamePresenter.updateP2pState(newState);
+      mGamePresenter.updateGameState(getStateName());
    }
 
 
    private void startNewGame()
    {
-      ownFleetModel = new OwnFleetModel(ownFleetModelUpdateListener);
-      enemyFleetModel = new EnemyFleetModel(enemyFleetModelUpdateListener);
+      ownFleetModel = new OwnFleetModel();
+      enemyFleetModel = new EnemyFleetModel();
+
+      mGamePresenter.setFleetModelUpdateListener(ownFleetModel,enemyFleetModel);
+      ownFleetModel.placeNewFleet();
+      enemyFleetModel.triggerTotalUpdate();
 
       setScore(AbstractFleetModel.NUMBER_OF_SHIPS, AbstractFleetModel.NUMBER_OF_SHIPS);
       setPlayerEnabled(myTurnFlag, true);
@@ -348,11 +332,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
 
    private void setScore(final int myShips, final int enemyShips)
    {
-      android.os.Message msg = android.os.Message.obtain();
-      msg.what = GameActivity.UPDATE_SCORE_BOARD;
-      msg.arg1 = myShips;
-      msg.arg2 = enemyShips;
-      mUiHandler.sendMessage(msg);
+      mGamePresenter.updateScoreBoard(myShips,enemyShips);
    }
 
 
@@ -363,7 +343,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       } else {
          mShotClock.stop();
       }
-      ((EnemyFleetView) enemyFleetModelUpdateListener).setEnabled(enable, newGame);
+      mGamePresenter.setPlayerEnabled(enable, newGame);
    }
 
    /*
@@ -385,10 +365,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
    @Override
    public void onTick(final int tick)
    {
-      android.os.Message msg = android.os.Message.obtain();
-      msg.what = GameActivity.UPDATE_SHOT_CLOCK;
-      msg.arg1 = tick;
-      mUiHandler.sendMessage(msg);
+      mGamePresenter.updateShotClock(tick);
    }
-
 }

@@ -34,7 +34,7 @@ public class OwnFleetView extends AbstractFleetView
       if (gridValue > 0) {
          Ship ship = fleetModel.getShips()[gridValue - 1];
          gridButtons[i][j].setBackground(ship.isDestroyed() ? mDrawableMap.get("DESTROYED") : mDrawableMap.get("SHIP"));
-         gridButtons[i][j].setText(ship.isDestroyed() ? Constants.DEAD_SYMBOL : "" + ship.getSize());
+         gridButtons[i][j].setText(ship.isDestroyed() ? null : "" + ship.getSize());
          return;
       }
 

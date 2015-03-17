@@ -2,12 +2,6 @@ package c4.subnetzero.shipsdroid.model;
 
 public class EnemyFleetModel extends AbstractFleetModel
 {
-   public EnemyFleetModel(final ModelUpdateListener updateListener)
-   {
-      super(updateListener);
-      listener.onTotalUpdate(this);
-   }
-
    public void update(final int i, final int j, final int resultFlag, final Ship ship)
    {
       if (ship != null) {
@@ -18,10 +12,14 @@ public class EnemyFleetModel extends AbstractFleetModel
             ix += (ship.getDir() == 0) ? 1 : 0;
             jy += (ship.getDir() != 0) ? 1 : 0;
          }
-         listener.onTotalUpdate(this);
+         if(listener != null) {
+            listener.onTotalUpdate(this);
+         }
       } else {
          seaGrid[i + 1][j + 1] = resultFlag;
-         listener.onPartialUpdate(this, i, j, resultFlag);
+         if(listener != null) {
+            listener.onPartialUpdate(this, i, j, resultFlag);
+         }
       }
    }
 }

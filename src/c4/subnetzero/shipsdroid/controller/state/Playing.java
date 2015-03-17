@@ -18,7 +18,7 @@ public class Playing extends GameStateAdapter
    @Override
    public void newGame()
    {
-      Utils.showOkMsg(mGameEngine.getContext(), R.string.abort_game_first_msg, null);
+      //Utils.showOkMsg(mGameEngine.getContext(), R.string.abort_game_first_msg, null);
    }
 
    @Override
@@ -33,7 +33,7 @@ public class Playing extends GameStateAdapter
    @Override
    public void resumeGame()
    {
-      Utils.showOkMsg(mGameEngine.getContext(), R.string.no_game_running_msg, null);
+      //Utils.showOkMsg(mGameEngine.getContext(), R.string.no_game_running_msg, null);
    }
 
 

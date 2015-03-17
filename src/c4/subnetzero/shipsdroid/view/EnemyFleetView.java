@@ -1,6 +1,7 @@
 package c4.subnetzero.shipsdroid.view;
 
 import android.content.Context;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import c4.subnetzero.shipsdroid.model.AbstractFleetModel;
@@ -10,7 +11,7 @@ public class EnemyFleetView extends AbstractFleetView
 {
    private static final String LOG_TAG = "EnemyFleetView";
 
-   public EnemyFleetView(Context context, final ViewGroup boardView, final GridButtonHandler gridButtonHandler, int size)
+   public EnemyFleetView(Context context, final ViewGroup boardView, final View.OnClickListener gridButtonHandler, int size)
    {
       super(context, boardView, gridButtonHandler, size);
    }
@@ -40,7 +41,7 @@ public class EnemyFleetView extends AbstractFleetView
 
       if (gridValue > 0 && gridValue < AbstractFleetModel.NUMBER_OF_SHIPS + 1) {
          gridButton.setBackground(mDrawableMap.get("DESTROYED"));
-         gridButton.setText(Constants.DEAD_SYMBOL);
+         gridButton.setText(null);
       }
 
    }

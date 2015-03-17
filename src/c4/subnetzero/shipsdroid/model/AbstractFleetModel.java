@@ -14,7 +14,11 @@ public abstract class AbstractFleetModel
    protected int shipsDestroyed = 0;
    protected ModelUpdateListener listener = null;
 
-   public AbstractFleetModel(final ModelUpdateListener listener)
+   public AbstractFleetModel()
+   {
+   }
+
+   public void setModelUpdateListener(final ModelUpdateListener listener)
    {
       this.listener = listener;
    }
@@ -43,6 +47,13 @@ public abstract class AbstractFleetModel
    {
       seaGrid = new int[(DIM + 2)][(DIM + 2)];
       ships = new Ship[NUMBER_OF_SHIPS];
+   }
+
+   public void triggerTotalUpdate()
+   {
+      if(listener != null){
+         listener.onTotalUpdate(this);
+      }
    }
 
    public interface ModelUpdateListener

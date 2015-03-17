@@ -5,12 +5,6 @@ public class OwnFleetModel extends AbstractFleetModel
 {
    private static final String LOG_TAG = "OwnFleetModel";
 
-   public OwnFleetModel(final ModelUpdateListener updateListener)
-   {
-      super(updateListener);
-      placeNewFleet();
-   }
-
    // Update the model based on shoot at i,j
    public Object[] update(final int i, final int j)
    {
@@ -39,24 +33,32 @@ public class OwnFleetModel extends AbstractFleetModel
                ix += (ship.getDir() == 0) ? 1 : 0;
                jy += (ship.getDir() != 0) ? 1 : 0;
             }
-            listener.onTotalUpdate(this);
+            if(listener != null) {
+               listener.onTotalUpdate(this);
+            }
             return new Object[]{DESTROYED, ship};
          } else {
             seaGrid[i + 1][j + 1] = -gridValue;
-            listener.onPartialUpdate(this, i, j, AbstractFleetModel.HIT);
+            if(listener != null) {
+               listener.onPartialUpdate(this, i, j, AbstractFleetModel.HIT);
+            }
             return new Object[]{HIT, null};
          }
       }
 
       seaGrid[i + 1][j + 1] = AbstractFleetModel.MISS;
-      listener.onPartialUpdate(this, i, j, AbstractFleetModel.MISS);
+      if(listener != null) {
+         listener.onPartialUpdate(this, i, j, AbstractFleetModel.MISS);
+      }
       return new Object[]{MISS, null};
    }
 
-   private void placeNewFleet()
+   public void placeNewFleet()
    {
       while (createFleet() < NUMBER_OF_SHIPS) ;
-      listener.onTotalUpdate(this);
+      if(listener != null) {
+         listener.onTotalUpdate(this);
+      }
    }
 
    private int createFleet()

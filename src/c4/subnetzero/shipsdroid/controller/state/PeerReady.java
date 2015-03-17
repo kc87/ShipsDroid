@@ -2,7 +2,6 @@ package c4.subnetzero.shipsdroid.controller.state;
 
 
 import c4.subnetzero.shipsdroid.R;
-import c4.subnetzero.shipsdroid.Utils;
 import c4.subnetzero.shipsdroid.controller.GameEngine;
 import c4.subnetzero.shipsdroid.p2p.Message;
 
@@ -27,19 +26,19 @@ public class PeerReady extends GameStateAdapter
    @Override
    public void pauseGame()
    {
-      Utils.showOkMsg(mGameEngine.getContext(), R.string.no_game_running_msg, null);
+      //Utils.showOkMsg(mGameEngine.getContext(), R.string.no_game_running_msg, null);
    }
 
    @Override
    public void resumeGame()
    {
-      Utils.showOkMsg(mGameEngine.getContext(), R.string.no_game_running_msg, null);
+      //Utils.showOkMsg(mGameEngine.getContext(), R.string.no_game_running_msg, null);
    }
 
    @Override
    public void abortGame()
    {
-      Utils.showOkMsg(mGameEngine.getContext(), R.string.no_game_running_msg, null);
+      //Utils.showOkMsg(mGameEngine.getContext(), R.string.no_game_running_msg, null);
    }
 
 }

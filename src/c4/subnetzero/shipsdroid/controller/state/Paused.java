@@ -19,13 +19,13 @@ public class Paused extends GameStateAdapter
    @Override
    public void newGame()
    {
-      Utils.showOkMsg(mGameEngine.getContext(), R.string.abort_game_first_msg, null);
+      //Utils.showOkMsg(mGameEngine.getContext(), R.string.abort_game_first_msg, null);
    }
 
    @Override
    public void pauseGame()
    {
-      Utils.showOkMsg(mGameEngine.getContext(), R.string.game_already_paused, null);
+      //Utils.showOkMsg(mGameEngine.getContext(), R.string.game_already_paused, null);
    }
 
    @Override

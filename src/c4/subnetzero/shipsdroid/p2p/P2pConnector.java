@@ -37,11 +37,6 @@ public abstract class P2pConnector
       return mState;
    }
 
-   public void setListener(final Listener listener)
-   {
-      mListener = listener;
-   }
-
    public void sendMessage(final Message message)
    {
       final Gson gson = new Gson();

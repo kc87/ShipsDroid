@@ -3,7 +3,7 @@ package c4.subnetzero.shipsdroid.model;
 public class Ship
 {
    private boolean destroyed = false;
-   private int n;      //position in fleed
+   private int n;      //position in fleet
    private int startI; //start position i of ship in grid
    private int startJ; //start position j of ship in grid
    private int dir;    //ship heading (horizontal or vertical)

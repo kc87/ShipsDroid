@@ -3,18 +3,10 @@ package c4.subnetzero.shipsdroid;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.provider.Settings;
-import android.util.Log;
 import android.widget.Toast;
 
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.util.Enumeration;
 
 public class Utils
 {
@@ -40,7 +32,7 @@ public class Utils
             @Override
             public void run()
             {
-               Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show();
+               Toast.makeText(context, toastMsg, Toast.LENGTH_LONG).show();
             }
          });
       }

@@ -25,9 +25,8 @@ public abstract class AbstractFleetView implements AbstractFleetModel.ModelUpdat
 {
    private static final String LOG_TAG = "AbstractFleetView";
 
-   private boolean isEnemy = false;
    private volatile boolean isEnabled = true;
-   private GridButtonHandler mGridButtonHandler = null;
+   private View.OnClickListener mGridButtonHandler = null;
 
    protected static final int DIM = SeaArea.DIM;
    protected Button[][] gridButtons = new Button[DIM][DIM];
@@ -38,13 +37,12 @@ public abstract class AbstractFleetView implements AbstractFleetModel.ModelUpdat
    protected Animation mFadeOutAnimation;
    protected Map<String, Drawable> mDrawableMap = new HashMap<>();
 
-   public AbstractFleetView(Context context, ViewGroup boardView, final GridButtonHandler gridButtonHandler, final int pxSize)
+   public AbstractFleetView(Context context, ViewGroup boardView, final View.OnClickListener gridButtonHandler, final int pxSize)
    {
       mContext = context;
       mBoardView = boardView;
       mGridButtonHandler = gridButtonHandler;
       mPxSize = pxSize;
-      isEnemy = (gridButtonHandler != null);
 
       setupFleetView();
    }
@@ -113,10 +111,6 @@ public abstract class AbstractFleetView implements AbstractFleetModel.ModelUpdat
 
       isEnabled = enable;
 
-      if (mGridButtonHandler != null) {
-         mGridButtonHandler.setEnabled(enable);
-      }
-
       if (Looper.getMainLooper().getThread() == Thread.currentThread()) {
          setEnabledOnUi(enable);
       } else {
@@ -129,12 +123,6 @@ public abstract class AbstractFleetView implements AbstractFleetModel.ModelUpdat
             }
          });
       }
-   }
-
-
-   public ViewGroup getView()
-   {
-      return mBoardView;
    }
 
    private void setEnabledOnUi(final boolean enable)
