@@ -45,6 +45,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
    public void setState(final GameState newState)
    {
       currentState = newState;
+      mGamePresenter.updateGameState(currentState.toString());
    }
 
    public void setHidden(final boolean isHidden)
@@ -160,7 +161,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                      mShotClock.resume();
                   }
                   setState(new Playing(this));
-                  mGamePresenter.updateGameState(getStateName());
                   return;
                }
 
@@ -175,7 +175,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                   setPlayerEnabled(true, false);
                   mShotClock.stop();
                   setState(new PeerReady(this));
-                  mGamePresenter.updateGameState(getStateName());
                   return;
                }
             }
@@ -191,7 +190,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                      mP2pService.sendMessage(msg);
                   }
                   setState(new Playing(this));
-                  mGamePresenter.updateGameState(getStateName());
                   startNewGame();
                   return;
                }
@@ -211,7 +209,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                   }
                   mShotClock.pause();
                   setState(new Paused(this));
-                  mGamePresenter.updateGameState(getStateName());
                   return;
                }
 
@@ -219,7 +216,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                   setPlayerEnabled(true, false);
                   mShotClock.stop();
                   setState(new PeerReady(this));
-                  mGamePresenter.updateGameState(getStateName());
                   mGamePresenter.showOkDialog(R.string.game_lose_msg);
                   return;
                }
@@ -235,7 +231,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                   setPlayerEnabled(true, false);
                   mShotClock.stop();
                   setState(new PeerReady(this));
-                  mGamePresenter.updateGameState(getStateName());
                   return;
                }
 
@@ -263,7 +258,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                      if (enemyFleetModel.isFleetDestroyed()) {
                         setScore(ownFleetModel.getShipsLeft(), 0);
                         currentState.finishGame();
-                        mGamePresenter.updateGameState(getStateName());
                         mGamePresenter.showOkDialog(R.string.game_win_msg);
                         return;
                      }
@@ -313,7 +307,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       }
 
       mGamePresenter.updateP2pState(newState);
-      mGamePresenter.updateGameState(getStateName());
    }
 
 

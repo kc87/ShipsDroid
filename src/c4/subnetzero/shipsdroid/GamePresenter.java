@@ -183,14 +183,14 @@ public class GamePresenter implements ServiceConnection
          case CONNECTING:
             //case UNREACHABLE:
             mGameActivityView.updateP2pState(R.drawable.state_yellow_bg);
-            showToast("Trying " + mP2pService.getPeerName());
+            showToast("Trying '" + mP2pService.getPeerName() + "'...");
             break;
          case DISCONNECTED:
             mGameActivityView.updateP2pState(R.drawable.state_red_bg);
             break;
          case CONNECTED:
             mGameActivityView.updateP2pState(R.drawable.state_green_bg);
-            showToast("Connected to " + mP2pService.getPeerName());
+            showToast("Connected to '" + mP2pService.getPeerName() + "'");
             break;
       }
    }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<c4.subnetzero.shipsdroid.view.OwnFleetView xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/own_fleet_view"
+              android:layout_height="match_parent"
+              android:layout_width="0dp"
+              android:orientation="horizontal"
+              android:gravity="center"
+              android:layout_weight="2"
+              android:background="#000"
+              >
+   <include layout="@layout/board" />
+</c4.subnetzero.shipsdroid.view.OwnFleetView>

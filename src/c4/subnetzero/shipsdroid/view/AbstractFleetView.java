@@ -5,7 +5,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Looper;
+import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -14,6 +16,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import c4.subnetzero.shipsdroid.GameActivity;
 import c4.subnetzero.shipsdroid.R;
 import c4.subnetzero.shipsdroid.model.AbstractFleetModel;
 import c4.subnetzero.shipsdroid.model.SeaArea;
@@ -21,7 +24,7 @@ import c4.subnetzero.shipsdroid.model.SeaArea;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractFleetView implements AbstractFleetModel.ModelUpdateListener
+public abstract class AbstractFleetView extends LinearLayout implements AbstractFleetModel.ModelUpdateListener
 {
    private static final String LOG_TAG = "AbstractFleetView";
 
@@ -30,22 +33,38 @@ public abstract class AbstractFleetView implements AbstractFleetModel.ModelUpdat
 
    protected static final int DIM = SeaArea.DIM;
    protected Button[][] gridButtons = new Button[DIM][DIM];
-   protected int mPxSize;
    protected Context mContext;
    protected ViewGroup mBoardView;
    protected Animation mFadeInAnimation;
    protected Animation mFadeOutAnimation;
    protected Map<String, Drawable> mDrawableMap = new HashMap<>();
 
-   public AbstractFleetView(Context context, ViewGroup boardView, final View.OnClickListener gridButtonHandler, final int pxSize)
+   public AbstractFleetView(Context context, AttributeSet attrs)
    {
+      super(context, attrs);
       mContext = context;
-      mBoardView = boardView;
-      mGridButtonHandler = gridButtonHandler;
-      mPxSize = pxSize;
-
-      setupFleetView();
+      // TODO: This is UGLY! Fix this!!
+      mGridButtonHandler = ((GameActivity)mContext).getGridButtonHandler();
    }
+
+   @Override
+   protected void onFinishInflate()
+   {
+      super.onFinishInflate();
+      mBoardView = (ViewGroup)this.getChildAt(0);
+   }
+
+   @Override
+   protected void onSizeChanged (int w, int h, int oldw, int oldh)
+   {
+      Log.d(LOG_TAG, "onSizeChanged: w=" + w + " h=" + h + " oldw=" + oldw + " oldh=" + oldh);
+      super.onSizeChanged(w,h,oldw,oldh);
+
+      if(oldh+oldw == 0){
+        setupFleetView(Math.min(w,h)-30);
+      }
+   }
+
 
    public abstract void updatePartialViewOnUi(final AbstractFleetModel fleetModel, final int i, final int j);
 
@@ -130,10 +149,12 @@ public abstract class AbstractFleetView implements AbstractFleetModel.ModelUpdat
       mBoardView.startAnimation(!enable ? mFadeOutAnimation : mFadeInAnimation);
    }
 
-   private void setupFleetView()
+   private void setupFleetView(final int pixelSize)
    {
+      Log.d(LOG_TAG, "setupFleetView()");
+
       DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
-      mBoardView.setLayoutParams(new LinearLayout.LayoutParams(mPxSize, mPxSize));
+      mBoardView.setLayoutParams(new LinearLayout.LayoutParams(pixelSize, pixelSize));
 
       mFadeInAnimation = AnimationUtils.loadAnimation(mContext, R.anim.fade_in);
       mFadeOutAnimation = AnimationUtils.loadAnimation(mContext, R.anim.fade_out);
@@ -159,13 +180,13 @@ public abstract class AbstractFleetView implements AbstractFleetModel.ModelUpdat
                   Button gridButton = (Button) childChild;
                   gridButton.setId(index);
                   gridButton.setOnClickListener(mGridButtonHandler);
-                  gridButton.setTextSize(mPxSize / (35 * metrics.scaledDensity));
+                  gridButton.setTextSize(pixelSize / (35 * metrics.scaledDensity));
                   gridButtons[col][row] = gridButton;
                   index++;
                }
                if (childChild instanceof TextView) {
                   TextView scaleText = (TextView) childChild;
-                  scaleText.setTextSize(mPxSize / (25 * metrics.scaledDensity));
+                  scaleText.setTextSize(pixelSize / (25 * metrics.scaledDensity));
                }
             }
          }

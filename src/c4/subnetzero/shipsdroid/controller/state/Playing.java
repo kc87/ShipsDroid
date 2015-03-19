@@ -2,7 +2,6 @@ package c4.subnetzero.shipsdroid.controller.state;
 
 
 import c4.subnetzero.shipsdroid.R;
-import c4.subnetzero.shipsdroid.Utils;
 import c4.subnetzero.shipsdroid.controller.GameEngine;
 import c4.subnetzero.shipsdroid.p2p.Message;
 
@@ -18,7 +17,7 @@ public class Playing extends GameStateAdapter
    @Override
    public void newGame()
    {
-      //Utils.showOkMsg(mGameEngine.getContext(), R.string.abort_game_first_msg, null);
+      mGameEngine.showMsg(R.string.abort_game_first_msg);
    }
 
    @Override
@@ -33,7 +32,7 @@ public class Playing extends GameStateAdapter
    @Override
    public void resumeGame()
    {
-      //Utils.showOkMsg(mGameEngine.getContext(), R.string.no_game_running_msg, null);
+      mGameEngine.showMsg(R.string.no_game_running_msg);
    }
 
 

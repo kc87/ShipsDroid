@@ -1,6 +1,7 @@
 package c4.subnetzero.shipsdroid.view;
 
 import android.content.Context;
+import android.util.AttributeSet;
 import android.view.ViewGroup;
 import c4.subnetzero.shipsdroid.model.AbstractFleetModel;
 import c4.subnetzero.shipsdroid.model.Ship;
@@ -8,10 +9,17 @@ import c4.subnetzero.shipsdroid.model.Ship;
 
 public class OwnFleetView extends AbstractFleetView
 {
+   public OwnFleetView(Context context, AttributeSet attrs)
+   {
+      super(context, attrs);
+   }
+
+
+   /*
    public OwnFleetView(Context context, ViewGroup boardView, int size)
    {
       super(context, boardView, null, size);
-   }
+   }*/
 
 
    /*

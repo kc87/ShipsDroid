@@ -1,6 +1,7 @@
 package c4.subnetzero.shipsdroid.view;
 
 import android.content.Context;
+import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -11,9 +12,9 @@ public class EnemyFleetView extends AbstractFleetView
 {
    private static final String LOG_TAG = "EnemyFleetView";
 
-   public EnemyFleetView(Context context, final ViewGroup boardView, final View.OnClickListener gridButtonHandler, int size)
+   public EnemyFleetView(Context context, AttributeSet attrs)
    {
-      super(context, boardView, gridButtonHandler, size);
+      super(context, attrs);
    }
 
    /*

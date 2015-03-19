@@ -9,14 +9,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
@@ -113,18 +111,6 @@ public class GameActivity extends Activity implements GameView
       super.onSaveInstanceState(outState);
    }
 
-
-   // Now the size of the views should be available
-   @Override
-   public void onWindowFocusChanged(boolean hasFocus)
-   {
-      super.onWindowFocusChanged(hasFocus);
-
-      if (mEnemyFleetView == null) {
-         buildGameBoard();
-      }
-   }
-
    @Override
    public boolean onCreateOptionsMenu(Menu menu)
    {
@@ -151,6 +137,7 @@ public class GameActivity extends Activity implements GameView
 
    private void setup()
    {
+      mBtnAnim = AnimationUtils.loadAnimation(this, R.anim.grow);
       mShotClockView = (TextView) findViewById(R.id.shot_clock);
       ActionBar mActionBar = getActionBar();
 
@@ -170,38 +157,12 @@ public class GameActivity extends Activity implements GameView
 
          mActionBar.setCustomView(scoreBoardView);
       }
-   }
 
-   private void buildGameBoard()
-   {
-      DisplayMetrics metrics = getResources().getDisplayMetrics();
-      ViewGroup enemyFrame = (ViewGroup) findViewById(R.id.enemy_fleet_frame);
-      ViewGroup ownFrame = (ViewGroup) findViewById(R.id.own_fleet_frame);
-
-      int minEnemyFrameSize = enemyFrame.getMeasuredWidth() > enemyFrame.getMeasuredHeight() ?
-              enemyFrame.getMeasuredHeight() : enemyFrame.getMeasuredWidth();
-
-      int minOwnFrameSize = ownFrame.getMeasuredWidth() > ownFrame.getMeasuredHeight() ?
-              ownFrame.getMeasuredHeight() : ownFrame.getMeasuredWidth();
-
-      minEnemyFrameSize = 12 * (int) (minEnemyFrameSize / 12.0f);
-      minOwnFrameSize = 12 * (int) (minOwnFrameSize / 12.0f);
-
-      LayoutInflater inflater = LayoutInflater.from(this);
-
-      mBtnAnim = AnimationUtils.loadAnimation(this, R.anim.grow);
-
-      View mEnemyBoard = inflater.inflate(R.layout.board, enemyFrame, false);
-      mEnemyFleetView = new EnemyFleetView(this, (ViewGroup) mEnemyBoard, mGridButtonHandler, minEnemyFrameSize - 12);
-      enemyFrame.addView(mEnemyBoard);
-
-      View mOwnBoard = inflater.inflate(R.layout.board, enemyFrame, false);
-      OwnFleetView mOwnFleetView = new OwnFleetView(this, (ViewGroup) mOwnBoard, minOwnFrameSize - (int) (30 * metrics.density));
-      ownFrame.addView(mOwnBoard);
-
-      mGamePresenter.initialize(mOwnFleetView,mEnemyFleetView);
+      mEnemyFleetView = (EnemyFleetView)findViewById(R.id.enemy_fleet_view);
+      mGamePresenter.initialize((OwnFleetView)findViewById(R.id.own_fleet_view),mEnemyFleetView);
       bindService(new Intent(this, P2pService.class), mGamePresenter, Context.BIND_AUTO_CREATE);
    }
+
 
    @Override
    public void enableBluetooth()
@@ -270,11 +231,13 @@ public class GameActivity extends Activity implements GameView
          @Override
          public void run()
          {
-           mMenu.findItem(R.id.connect_peer).setVisible(isVisibleList[0]);
-           mMenu.findItem(R.id.new_game).setVisible(isVisibleList[1]);
-           mMenu.findItem(R.id.pause_game).setVisible(isVisibleList[2]);
-           mMenu.findItem(R.id.resume_game).setVisible(isVisibleList[3]);
-           mMenu.findItem(R.id.abort_game).setVisible(isVisibleList[4]);
+            if(mMenu != null) {
+               mMenu.findItem(R.id.connect_peer).setVisible(isVisibleList[0]);
+               mMenu.findItem(R.id.new_game).setVisible(isVisibleList[1]);
+               mMenu.findItem(R.id.pause_game).setVisible(isVisibleList[2]);
+               mMenu.findItem(R.id.resume_game).setVisible(isVisibleList[3]);
+               mMenu.findItem(R.id.abort_game).setVisible(isVisibleList[4]);
+            }
          }
       });
    }
@@ -284,6 +247,11 @@ public class GameActivity extends Activity implements GameView
    {
       isEnemyFleetViewEnabled = enable;
       mEnemyFleetView.setEnabled(enable, newGame);
+   }
+
+   public View.OnClickListener getGridButtonHandler()
+   {
+      return mGridButtonHandler;
    }
 
    private View.OnClickListener mGridButtonHandler = new View.OnClickListener()
