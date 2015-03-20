@@ -39,10 +39,20 @@ public abstract class AbstractFleetView extends LinearLayout implements Abstract
    protected Animation mFadeOutAnimation;
    protected Map<String, Drawable> mDrawableMap = new HashMap<>();
 
+
    public AbstractFleetView(Context context, AttributeSet attrs)
    {
       super(context, attrs);
       mContext = context;
+      mFadeInAnimation = AnimationUtils.loadAnimation(mContext, R.anim.fade_in);
+      mFadeOutAnimation = AnimationUtils.loadAnimation(mContext, R.anim.fade_out);
+      mDrawableMap.put("WATER", mContext.getResources().getDrawable(R.drawable.water));
+      mDrawableMap.put("SHIP", mContext.getResources().getDrawable(R.drawable.ship));
+      mDrawableMap.put("MISS", mContext.getResources().getDrawable(R.drawable.miss));
+      mDrawableMap.put("HIT", mContext.getResources().getDrawable(R.drawable.hit));
+      mDrawableMap.put("DESTROYED", mContext.getResources().getDrawable(R.drawable.destroyed));
+      mDrawableMap.put("DISABLED_BOARD", mContext.getResources().getDrawable(R.drawable.gray_board_bg));
+      mDrawableMap.put("ENABLED_BOARD", mContext.getResources().getDrawable(R.drawable.green_board_bg));
       // TODO: This is UGLY! Fix this!!
       mGridButtonHandler = ((GameActivity)mContext).getGridButtonHandler();
    }
@@ -155,17 +165,6 @@ public abstract class AbstractFleetView extends LinearLayout implements Abstract
 
       DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
       mBoardView.setLayoutParams(new LinearLayout.LayoutParams(pixelSize, pixelSize));
-
-      mFadeInAnimation = AnimationUtils.loadAnimation(mContext, R.anim.fade_in);
-      mFadeOutAnimation = AnimationUtils.loadAnimation(mContext, R.anim.fade_out);
-
-      mDrawableMap.put("WATER", mContext.getResources().getDrawable(R.drawable.water));
-      mDrawableMap.put("SHIP", mContext.getResources().getDrawable(R.drawable.ship));
-      mDrawableMap.put("MISS", mContext.getResources().getDrawable(R.drawable.miss));
-      mDrawableMap.put("HIT", mContext.getResources().getDrawable(R.drawable.hit));
-      mDrawableMap.put("DESTROYED", mContext.getResources().getDrawable(R.drawable.destroyed));
-      mDrawableMap.put("DISABLED_BOARD", mContext.getResources().getDrawable(R.drawable.gray_board_bg));
-      mDrawableMap.put("ENABLED_BOARD", mContext.getResources().getDrawable(R.drawable.green_board_bg));
 
       gridButtons = new Button[DIM][DIM];
 

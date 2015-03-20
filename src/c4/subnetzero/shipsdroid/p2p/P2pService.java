@@ -27,14 +27,21 @@ public class P2pService extends Service implements P2pConnector.Listener
    @Override
    public IBinder onBind(Intent intent)
    {
+      Log.d(LOG_TAG, "onBind()");
       return mLocalBinder;
+   }
+
+   @Override
+   public boolean onUnbind (Intent intent)
+   {
+      Log.d(LOG_TAG, "onUnbind()");
+      return false;
    }
 
    @Override
    public void onDestroy()
    {
       Log.d(LOG_TAG, "onDestroy()");
-      stop();
       super.onDestroy();
    }
 
@@ -45,6 +52,7 @@ public class P2pService extends Service implements P2pConnector.Listener
 
    public void stop()
    {
+      Log.d(LOG_TAG, "stop()");
       mListener = null;
       mP2pConnector.stop();
    }

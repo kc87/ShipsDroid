@@ -21,6 +21,9 @@ public abstract class AbstractFleetModel
    public void setModelUpdateListener(final ModelUpdateListener listener)
    {
       this.listener = listener;
+      if(listener != null){
+         triggerTotalUpdate();
+      }
    }
 
    public int getShipsLeft()

@@ -47,12 +47,18 @@ public abstract class P2pConnector
    {
       Log.d(LOG_TAG,"New state: "+newSate.name());
       mState = newSate;
-      mListener.onStateChanged(mState);
+      if(mListener != null) {
+         mListener.onStateChanged(mState);
+      }
    }
 
    protected void parsePacket(String msgStr)
    {
       Gson gson = new GsonBuilder().serializeNulls().create();
+
+      if(mListener == null){
+         return;
+      }
 
       try {
          msgStr = msgStr.trim();

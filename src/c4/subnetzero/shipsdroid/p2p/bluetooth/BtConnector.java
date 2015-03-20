@@ -94,6 +94,9 @@ public class BtConnector extends P2pConnector
    @Override
    public void start()
    {
+      if(mState == State.CONNECTED || mState == State.CONNECTING){
+         return;
+      }
       setup();
       if (mState != State.DISABLED) {
          startAcceptThread();
@@ -103,6 +106,7 @@ public class BtConnector extends P2pConnector
    @Override
    public void stop()
    {
+      mListener = null;
       disconnectPeer();
 
       if (mAcceptThread != null) {

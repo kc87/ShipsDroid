@@ -1,5 +1,11 @@
 package c4.subnetzero.shipsdroid.controller;
 
+import android.app.Application;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 import android.util.Log;
 import c4.subnetzero.shipsdroid.GamePresenter;
 import c4.subnetzero.shipsdroid.R;
@@ -20,26 +26,26 @@ import c4.subnetzero.shipsdroid.p2p.P2pService;
 import java.util.ArrayList;
 
 
-public final class GameEngine implements P2pService.Listener, ShotClock.Listener
+public final class GameEngine implements P2pService.Listener, ShotClock.Listener, ServiceConnection
 {
    private static final String LOG_TAG = "GameEngine";
+   private Application mApplication;
    private ShotClock mShotClock;
    private P2pService mP2pService;
    private OwnFleetModel ownFleetModel = null;
    private EnemyFleetModel enemyFleetModel = null;
    private volatile boolean myTurnFlag = false;
    private boolean mIsHidden = false;
+   private boolean mIsServiceBound = false;
    private GameState currentState = new Disconnected(this);
    private GamePresenter mGamePresenter;
 
-   public GameEngine(final GamePresenter gamePresenter, final P2pService p2pService)
+   public GameEngine(final Application app)
    {
-      mGamePresenter = gamePresenter;
-      mP2pService = p2pService;
-      mP2pService.setListener(this);
-
+      mApplication = app;
       mShotClock = new ShotClock();
       mShotClock.setListener(this);
+      startUp();
    }
 
    public void setState(final GameState newState)
@@ -51,6 +57,12 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
    public void setHidden(final boolean isHidden)
    {
       mIsHidden = isHidden;
+   }
+
+
+   public void setPresenter(final GamePresenter gamePresenter)
+   {
+      mGamePresenter = gamePresenter;
    }
 
    public P2pService getP2pService()
@@ -105,6 +117,16 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       }
    }
 
+
+   public void startUp()
+   {
+      if(!mIsServiceBound) {
+         mApplication.bindService(new Intent(mApplication, P2pService.class), this, Context.BIND_AUTO_CREATE);
+         mIsServiceBound = true;
+      }
+   }
+
+
    public void shutDown()
    {
       mShotClock.stop();
@@ -113,11 +135,16 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       quitMsg.TYPE = Message.CTRL;
       quitMsg.SUB_TYPE = Message.PEER_QUIT;
       mP2pService.sendMessage(quitMsg);
+      mP2pService.stop();
+      mApplication.unbindService(this);
+      mIsServiceBound = false;
    }
 
    public void showMsg(final int resourceId)
    {
-      mGamePresenter.showToast(resourceId);
+      if(mGamePresenter != null) {
+         mGamePresenter.showToast(resourceId);
+      }
    }
 
    // FIXME: This method obviously needs some refactoring ;)
@@ -128,9 +155,11 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
          if (msg.SUB_TYPE == Message.PEER_QUIT) {
             mShotClock.stop();
             setState(new PeerReady(this));
-            mGamePresenter.closeOkDialog();
+            //mGamePresenter.closeOkDialog();
             showMsg(R.string.peer_has_quit_msg);
-            mGamePresenter.executeMenuAction(R.id.quit_game_app);
+            if(mGamePresenter != null) {
+               mGamePresenter.executeMenuAction(R.id.quit_game_app);
+            }
             return;
          }
          if (msg.SUB_TYPE == Message.PEER_IS_HIDDEN) {
@@ -216,7 +245,9 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                   setPlayerEnabled(true, false);
                   mShotClock.stop();
                   setState(new PeerReady(this));
-                  mGamePresenter.showOkDialog(R.string.game_lose_msg);
+                  if(mGamePresenter != null) {
+                     mGamePresenter.showOkDialog(R.string.game_lose_msg);
+                  }
                   return;
                }
 
@@ -258,7 +289,9 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                      if (enemyFleetModel.isFleetDestroyed()) {
                         setScore(ownFleetModel.getShipsLeft(), 0);
                         currentState.finishGame();
-                        mGamePresenter.showOkDialog(R.string.game_win_msg);
+                        if(mGamePresenter != null) {
+                           mGamePresenter.showOkDialog(R.string.game_win_msg);
+                        }
                         return;
                      }
 
@@ -306,7 +339,9 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
             break;
       }
 
-      mGamePresenter.updateP2pState(newState);
+      if(mGamePresenter != null) {
+         mGamePresenter.updateP2pState(newState);
+      }
    }
 
 
@@ -317,7 +352,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
 
       mGamePresenter.setFleetModelUpdateListener(ownFleetModel,enemyFleetModel);
       ownFleetModel.placeNewFleet();
-      enemyFleetModel.triggerTotalUpdate();
 
       setScore(AbstractFleetModel.NUMBER_OF_SHIPS, AbstractFleetModel.NUMBER_OF_SHIPS);
       setPlayerEnabled(myTurnFlag, true);
@@ -325,7 +359,9 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
 
    private void setScore(final int myShips, final int enemyShips)
    {
-      mGamePresenter.updateScoreBoard(myShips,enemyShips);
+      if(mGamePresenter != null) {
+         mGamePresenter.updateScoreBoard(myShips, enemyShips);
+      }
    }
 
 
@@ -336,7 +372,10 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       } else {
          mShotClock.stop();
       }
-      mGamePresenter.setPlayerEnabled(enable, newGame);
+
+      if(mGamePresenter != null) {
+         mGamePresenter.setPlayerEnabled(enable, newGame);
+      }
    }
 
    /*
@@ -358,6 +397,31 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
    @Override
    public void onTick(final int tick)
    {
-      mGamePresenter.updateShotClock(tick);
+      if(mGamePresenter != null) {
+         mGamePresenter.updateShotClock(tick);
+      }
+   }
+
+   /*
+    * ***********************************************
+    * Implementation of ServiceConnection Callbacks *
+    * ***********************************************
+    */
+
+   @Override
+   public void onServiceConnected(ComponentName name, IBinder service)
+   {
+      Log.d(LOG_TAG, "onServiceConnected()");
+      mP2pService = ((P2pService.LocalBinder) service).getService();
+      mP2pService.setListener(this);
+      mP2pService.start();
+   }
+
+   // Only gets called when service has crashed!!
+   @Override
+   public void onServiceDisconnected(ComponentName name)
+   {
+      Log.d(LOG_TAG, "onServiceDisconnected(): Service has crashed!!");
+      mP2pService = null;
    }
 }

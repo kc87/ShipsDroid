@@ -1,29 +1,29 @@
 package c4.subnetzero.shipsdroid;
 
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.ServiceConnection;
-import android.os.IBinder;
 import android.util.Log;
 import c4.subnetzero.shipsdroid.controller.GameEngine;
 import c4.subnetzero.shipsdroid.model.AbstractFleetModel;
 import c4.subnetzero.shipsdroid.model.SeaArea;
 import c4.subnetzero.shipsdroid.p2p.P2pConnector;
-import c4.subnetzero.shipsdroid.p2p.P2pService;
 import c4.subnetzero.shipsdroid.model.AbstractFleetModel.ModelUpdateListener;
 
-public class GamePresenter implements ServiceConnection
+public class GamePresenter
 {
    private static final String LOG_TAG = "GameActivityPresenter";
    private ModelUpdateListener ownFleetModelUpdateListener = null;
    private ModelUpdateListener enemyFleetModelUpdateListener = null;
    private GameEngine mGameEngine;
    private GameView mGameActivityView;
-   private P2pService mP2pService;
 
-   public GamePresenter(final GameView gameActivityView)
+
+
+   public GamePresenter(final GameView gameActivityView,final GameEngine gameEngine)
    {
       mGameActivityView = gameActivityView;
+      mGameEngine = gameEngine;
+      mGameEngine.setPresenter(this);
+      mGameEngine.startUp();
    }
 
    public void initialize(final ModelUpdateListener ownListener,final ModelUpdateListener enemyListener)
@@ -32,38 +32,18 @@ public class GamePresenter implements ServiceConnection
       enemyFleetModelUpdateListener = enemyListener;
    }
 
-   public void startP2pService()
-   {
-      if(mP2pService != null){
-         mP2pService.start();
-      }
-   }
-
-   public void quit()
-   {
-      if (mP2pService != null) {
-         mP2pService.setListener(null);
-      }
-
-      if (mGameEngine != null) {
-         mGameEngine.shutDown();
-      }
-   }
 
    public void onResume()
    {
       Log.d(LOG_TAG, "onResume()");
-
-      if (mGameEngine != null) {
-         mGameEngine.setHidden(false);
-      }
+      mGameEngine.setHidden(false);
    }
 
-   public void onPause()
+   public void onPause(final boolean isChangingConfigurations)
    {
       Log.d(LOG_TAG, "onPause()");
 
-      if (mGameEngine != null) {
+      if (!isChangingConfigurations) {
          if (mGameEngine.getStateName().equals("Playing")) {
             mGameEngine.pauseGame();
          } else {
@@ -72,10 +52,13 @@ public class GamePresenter implements ServiceConnection
       }
    }
 
-   public void onDestroy()
+   public void onDestroy(final boolean isChangingConfigurations)
    {
       Log.d(LOG_TAG, "onDestroy()");
-      quit();
+      mGameEngine.setPresenter(null);
+      if(!isChangingConfigurations) {
+         mGameEngine.shutDown();
+      }
    }
 
    public void shoot(final int buttonIndex)
@@ -131,7 +114,6 @@ public class GamePresenter implements ServiceConnection
             mGameEngine.abortGame();
             break;
          case R.id.quit_game_app:
-            quit();
             mGameActivityView.finishView();
             break;
       }
@@ -183,14 +165,16 @@ public class GamePresenter implements ServiceConnection
          case CONNECTING:
             //case UNREACHABLE:
             mGameActivityView.updateP2pState(R.drawable.state_yellow_bg);
-            showToast("Trying '" + mP2pService.getPeerName() + "'...");
+            //showToast("Trying '" + mP2pService.getPeerName() + "'...");
+            showToast("Trying to connect...");
             break;
          case DISCONNECTED:
             mGameActivityView.updateP2pState(R.drawable.state_red_bg);
             break;
          case CONNECTED:
             mGameActivityView.updateP2pState(R.drawable.state_green_bg);
-            showToast("Connected to '" + mP2pService.getPeerName() + "'");
+            //showToast("Connected to '" + mP2pService.getPeerName() + "'");
+            showToast("Connected!");
             break;
       }
    }
@@ -204,22 +188,5 @@ public class GamePresenter implements ServiceConnection
    public void setPlayerEnabled(final boolean enable, final boolean newGame)
    {
       mGameActivityView.setEnemyFleetViewEnabled(enable, newGame);
-   }
-
-   @Override
-   public void onServiceConnected(ComponentName name, IBinder service)
-   {
-      Log.d(LOG_TAG, "onServiceConnected()");
-      mP2pService = ((P2pService.LocalBinder) service).getService();
-      mGameEngine = new GameEngine(this, mP2pService);
-      startP2pService();
-   }
-
-   // Only gets called when service has crashed!!
-   @Override
-   public void onServiceDisconnected(ComponentName name)
-   {
-      Log.d(LOG_TAG, "onServiceDisconnected(): Service has crashed!!");
-      mP2pService = null;
    }
 }

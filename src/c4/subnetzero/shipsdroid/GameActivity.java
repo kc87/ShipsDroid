@@ -19,7 +19,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import c4.subnetzero.shipsdroid.p2p.P2pService;
 import c4.subnetzero.shipsdroid.view.EnemyFleetView;
 import c4.subnetzero.shipsdroid.view.OwnFleetView;
 
@@ -29,6 +28,7 @@ public class GameActivity extends Activity implements GameView
    private static final int REQUEST_ENABLE_BT = 1;
 
    private GamePresenter mGamePresenter;
+   private Bundle mViewState;
    private Menu mMenu;
    private Animation mBtnAnim;
    private EnemyFleetView mEnemyFleetView;
@@ -44,7 +44,7 @@ public class GameActivity extends Activity implements GameView
       Log.d(LOG_TAG, "onCreate()");
       super.onCreate(savedInstanceState);
       setContentView(R.layout.game);
-      mGamePresenter = new GamePresenter(this);
+      mGamePresenter = new GamePresenter(this,((ShipsDroidApp)getApplication()).getEngine());
       //mRestarted = false;
       setup();
    }
@@ -78,23 +78,15 @@ public class GameActivity extends Activity implements GameView
    {
       Log.d(LOG_TAG, "onPause()");
       super.onPause();
-      mGamePresenter.onPause();
+      mGamePresenter.onPause(isChangingConfigurations());
    }
 
    @Override
    protected void onDestroy()
    {
       Log.d(LOG_TAG, "onDestroy()");
-      mGamePresenter.onDestroy();
-      unbindService(mGamePresenter);
+      mGamePresenter.onDestroy(isChangingConfigurations());
       super.onDestroy();
-   }
-
-   @Override
-   public void onBackPressed()
-   {
-      mGamePresenter.quit();
-      finish();
    }
 
    @Override
@@ -102,6 +94,11 @@ public class GameActivity extends Activity implements GameView
    {
       Log.d(LOG_TAG, "onRestoreInstanceState()");
       super.onRestoreInstanceState(savedInstanceState);
+      mViewState = savedInstanceState.getBundle("view_state");
+      updateP2pState(mViewState.getInt("state_bg_id"));
+      updateScoreBoard(mViewState.getString("my_score"),mViewState.getString("enemy_score"));
+      setEnemyFleetViewEnabled(mViewState.getBoolean("enemy_fleet_enabled"),
+              mViewState.getBoolean("new_game"));
    }
 
    @Override
@@ -109,14 +106,19 @@ public class GameActivity extends Activity implements GameView
    {
       Log.d(LOG_TAG, "onSaveInstanceState()");
       super.onSaveInstanceState(outState);
+      outState.putBundle("view_state",mViewState);
    }
 
    @Override
    public boolean onCreateOptionsMenu(Menu menu)
    {
+      Log.d(LOG_TAG,"onCreateOptionsMenu()");
       MenuInflater inflater = getMenuInflater();
       inflater.inflate(R.menu.game, menu);
       mMenu = menu;
+      if(mViewState.containsKey("visibility_list")) {
+         setMenuItemVisibility(mViewState.getBooleanArray("visibility_list"));
+      }
       return true;
    }
 
@@ -131,14 +133,16 @@ public class GameActivity extends Activity implements GameView
    protected void onActivityResult(int requestCode, int resultCode, Intent intent)
    {
       if (requestCode == REQUEST_ENABLE_BT) {
-         mGamePresenter.startP2pService();
+         //mGamePresenter.startP2pService();
       }
    }
 
    private void setup()
    {
+      mViewState = new Bundle();
       mBtnAnim = AnimationUtils.loadAnimation(this, R.anim.grow);
       mShotClockView = (TextView) findViewById(R.id.shot_clock);
+
       ActionBar mActionBar = getActionBar();
 
       if (mActionBar != null) {
@@ -160,9 +164,7 @@ public class GameActivity extends Activity implements GameView
 
       mEnemyFleetView = (EnemyFleetView)findViewById(R.id.enemy_fleet_view);
       mGamePresenter.initialize((OwnFleetView)findViewById(R.id.own_fleet_view),mEnemyFleetView);
-      bindService(new Intent(this, P2pService.class), mGamePresenter, Context.BIND_AUTO_CREATE);
    }
-
 
    @Override
    public void enableBluetooth()
@@ -181,6 +183,7 @@ public class GameActivity extends Activity implements GameView
    public void updateP2pState(final int bgResourceId)
    {
       final Drawable stateDrawable = getResources().getDrawable(bgResourceId);
+      mViewState.putInt("state_bg_id",bgResourceId);
 
       runOnUiThread(new Runnable()
       {
@@ -208,6 +211,9 @@ public class GameActivity extends Activity implements GameView
    @Override
    public void updateScoreBoard(final String myScore, final String enemyScore)
    {
+      mViewState.putString("my_score",myScore);
+      mViewState.putString("enemy_score", enemyScore);
+
       runOnUiThread(new Runnable()
       {
          @Override
@@ -225,6 +231,8 @@ public class GameActivity extends Activity implements GameView
       if (isVisibleList.length != 5) {
          return;
       }
+
+      mViewState.putBooleanArray("visibility_list",isVisibleList);
 
       runOnUiThread(new Runnable()
       {
@@ -245,6 +253,8 @@ public class GameActivity extends Activity implements GameView
    @Override
    public void setEnemyFleetViewEnabled(boolean enable, boolean newGame)
    {
+      mViewState.putBoolean("enemy_fleet_enabled",enable);
+      mViewState.putBoolean("new_game",newGame);
       isEnemyFleetViewEnabled = enable;
       mEnemyFleetView.setEnabled(enable, newGame);
    }
