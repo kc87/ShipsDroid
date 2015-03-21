@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#000"
+              android:baselineAligned="false">
+
+    <LinearLayout android:layout_width="0dp"
+                  android:layout_height="match_parent"
+                  android:layout_weight="3"
+                  android:gravity="center">
+        <c4.kc87.shipsdroid.view.EnemyFleetView
+                android:id="@+id/enemy_fleet_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="8dp"
+                android:background="@drawable/gray_board_bg">
+            <include layout="@layout/board"/>
+        </c4.kc87.shipsdroid.view.EnemyFleetView>
+    </LinearLayout>
+
+    <LinearLayout android:orientation="vertical"
+                  android:layout_width="0dp"
+                  android:layout_height="match_parent"
+                  android:layout_weight="2"
+                  android:gravity="center_horizontal"
+                  android:background="#000">
+
+        <RelativeLayout android:layout_height="wrap_content"
+                        android:layout_width="150dp"
+                        android:background="@drawable/gray_board_bg"
+                        android:layout_margin="8dp"
+                        android:paddingLeft="10dp"
+                        android:paddingRight="10dp">
+
+            <TextView android:id="@+id/shot_clock_label"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_centerVertical="true"
+                      android:textSize="20sp"
+                      android:textColor="#000"
+                      android:text="Shot\nClock"/>
+
+            <TextView android:id="@+id/shot_clock"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_centerHorizontal="true"
+                      android:layout_alignParentRight="true"
+                      android:includeFontPadding="false"
+                      android:layout_marginTop="-2dp"
+                      android:textSize="60sp"
+                      android:textColor="#000"
+                      android:text="0"/>
+        </RelativeLayout>
+
+        <kc87.shipsdroid.view.OwnFleetView
+                android:id="@+id/own_fleet_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginRight="8dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginTop="0dp"
+                android:background="@drawable/gray_board_bg">
+            <include layout="@layout/board"/>
+        </kc87.shipsdroid.view.OwnFleetView>
+
+    </LinearLayout>
+</LinearLayout>
