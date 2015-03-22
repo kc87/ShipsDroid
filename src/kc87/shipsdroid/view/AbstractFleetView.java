@@ -25,7 +25,7 @@ import java.util.Map;
 public abstract class AbstractFleetView extends TableLayout implements AbstractFleetModel.ModelUpdateListener
 {
    private static final String LOG_TAG = "AbstractFleetView";
-
+   private static final int DEFAULT_BOARD_SIZE = 300;
    private volatile boolean isEnabled = true;
    private View.OnClickListener mGridButtonHandler = null;
 
@@ -66,14 +66,20 @@ public abstract class AbstractFleetView extends TableLayout implements AbstractF
       final int specWidth  = MeasureSpec.getSize(widthMeasureSpec);
       final int specHeight = MeasureSpec.getSize(heightMeasureSpec);
 
+      // Make sure we always show up
+      int boardSize = DEFAULT_BOARD_SIZE;
+
       Log.d(LOG_TAG,"onMeasure() spec width -> "+specModeToString(specModeW)+":"+specWidth+
                                 " spec height -> "+specModeToString(specModeH)+":"+specHeight);
 
-      final int boardSize = Math.min(specWidth,specHeight);
+      // Obey size constrains and be square
+      if(specWidth*specHeight != 0) {
+         boardSize = Math.min(specWidth, specHeight);
+      }
 
-      Log.d(LOG_TAG,"onMeasure() results -> width:"+boardSize+" height:"+boardSize);
-      super.onMeasure(MeasureSpec.makeMeasureSpec(boardSize,specModeW),
-                      MeasureSpec.makeMeasureSpec(boardSize,specModeH));
+      // super takes care of calling setMeasuredDimension()
+      super.onMeasure(MeasureSpec.makeMeasureSpec(boardSize,MeasureSpec.EXACTLY),
+                      MeasureSpec.makeMeasureSpec(boardSize,MeasureSpec.EXACTLY));
    }
 
    @Override
@@ -148,6 +154,7 @@ public abstract class AbstractFleetView extends TableLayout implements AbstractF
          });
       }
    }
+
 
    public void setEnabled(final boolean enable, final boolean newGame)
    {

@@ -167,7 +167,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
          if (msg.SUB_TYPE == Message.PEER_QUIT) {
             mShotClock.stop();
             setState(new PeerReady(this));
-            //mGamePresenter.closeOkDialog();
             showMsg(R.string.peer_has_quit_msg);
             if(mGamePresenter != null) {
                mGamePresenter.executeMenuAction(R.id.quit_game_app);
@@ -362,7 +361,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       ownFleetModel = new OwnFleetModel();
       enemyFleetModel = new EnemyFleetModel();
 
-      //mGamePresenter.setFleetModelUpdateListener(ownFleetModel,enemyFleetModel);
       mGamePresenter.setFleetModelUpdateListener();
       ownFleetModel.placeNewFleet();
 
