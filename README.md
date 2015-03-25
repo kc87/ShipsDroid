@@ -20,6 +20,8 @@ P2P [Battleship Game](http://en.wikipedia.org/wiki/Battleship_%28game%29) using 
 
 * Landscape layout for tablet use
 
-## Screenshot
+## Screenshots
 
 ![alt tag](docs/shipsdroid.png)
+
+![alt tag](docs/shipsdroid_land.png)
