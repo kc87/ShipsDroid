@@ -9,11 +9,11 @@ public class EnemyFleetModel extends AbstractFleetModel
          ships[ship.getNumber() - 1] = ship;
          for (int m = 0, ix = ship.getStartI(), jy = ship.getStartJ(); m < ship.getSize(); m++) {
             seaGrid[ix][jy] = ship.getNumber();
+            if (listener != null) {
+               listener.onPartialUpdate(this, ix - 1, jy - 1, AbstractFleetModel.DESTROYED);
+            }
             ix += (ship.getDir() == 0) ? 1 : 0;
             jy += (ship.getDir() != 0) ? 1 : 0;
-         }
-         if(listener != null) {
-            listener.onTotalUpdate(this);
          }
       } else {
          seaGrid[i + 1][j + 1] = resultFlag;

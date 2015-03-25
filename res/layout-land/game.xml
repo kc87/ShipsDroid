@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:custom="http://schemas.android.com/apk/res/kc87.shipsdroid"
               android:orientation="horizontal"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
@@ -15,7 +16,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_margin="8dp"
-                android:background="@drawable/gray_board_bg">
+                android:background="@drawable/gray_board_bg"
+                custom:scaleTextColor="#500"
+                custom:waterTile="@drawable/water"
+                custom:shipTile="@drawable/ship"
+                custom:hitTile="@drawable/hit"
+                custom:destroyedTile="@drawable/destroyed"
+                custom:missTile="@drawable/miss">
             <include layout="@layout/board"/>
         </kc87.shipsdroid.view.EnemyFleetView>
     </LinearLayout>
@@ -50,8 +57,7 @@
                       android:includeFontPadding="false"
                       android:layout_marginTop="-2dp"
                       android:textSize="60sp"
-                      android:textColor="#000"
-                      android:text="0"/>
+                      android:textColor="#000"/>
         </RelativeLayout>
 
         <kc87.shipsdroid.view.OwnFleetView
@@ -62,7 +68,13 @@
                 android:layout_marginLeft="8dp"
                 android:layout_marginBottom="8dp"
                 android:layout_marginTop="0dp"
-                android:background="@drawable/gray_board_bg">
+                android:background="@drawable/gray_board_bg"
+                custom:scaleTextColor="#444"
+                custom:waterTile="@drawable/water2"
+                custom:shipTile="@drawable/ship2"
+                custom:hitTile="@drawable/hit2"
+                custom:destroyedTile="@drawable/destroyed2"
+                custom:missTile="@drawable/miss2">
             <include layout="@layout/board"/>
         </kc87.shipsdroid.view.OwnFleetView>
 

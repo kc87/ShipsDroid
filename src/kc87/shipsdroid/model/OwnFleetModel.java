@@ -5,7 +5,7 @@ public class OwnFleetModel extends AbstractFleetModel
 {
    private static final String LOG_TAG = "OwnFleetModel";
 
-   // Update the model based on shoot at i,j
+   // Update the model based on shot at i,j
    public Object[] update(final int i, final int j)
    {
       int gridValue = seaGrid[i + 1][j + 1];
@@ -30,11 +30,11 @@ public class OwnFleetModel extends AbstractFleetModel
             shipsDestroyed++;
             for (int m = 0, ix = ship.getStartI(), jy = ship.getStartJ(); m < ship.getSize(); m++) {
                seaGrid[ix][jy] = Math.abs(gridValue);
+               if (listener != null) {
+                  listener.onPartialUpdate(this, ix - 1, jy - 1, AbstractFleetModel.DESTROYED);
+               }
                ix += (ship.getDir() == 0) ? 1 : 0;
                jy += (ship.getDir() != 0) ? 1 : 0;
-            }
-            if(listener != null) {
-               listener.onTotalUpdate(this);
             }
             return new Object[]{DESTROYED, ship};
          } else {
@@ -47,7 +47,7 @@ public class OwnFleetModel extends AbstractFleetModel
       }
 
       seaGrid[i + 1][j + 1] = AbstractFleetModel.MISS;
-      if(listener != null) {
+      if (listener != null) {
          listener.onPartialUpdate(this, i, j, AbstractFleetModel.MISS);
       }
       return new Object[]{MISS, null};
@@ -56,7 +56,7 @@ public class OwnFleetModel extends AbstractFleetModel
    public void placeNewFleet()
    {
       while (createFleet() < NUMBER_OF_SHIPS) ;
-      if(listener != null) {
+      if (listener != null) {
          listener.onTotalUpdate(this);
       }
    }

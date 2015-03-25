@@ -14,11 +14,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import kc87.shipsdroid.view.AbstractFleetView;
 import kc87.shipsdroid.view.EnemyFleetView;
 import kc87.shipsdroid.view.OwnFleetView;
 
@@ -29,13 +26,11 @@ public class GameActivity extends Activity implements GameView
 
    private GamePresenter mGamePresenter;
    private Menu mMenu;
-   private Animation mBtnAnim;
    private EnemyFleetView mEnemyFleetView;
    private TextView mShotClockView;
    private TextView mEnemyShipsView;
    private TextView mMyShipsView;
    private ImageButton mConState;
-   private volatile boolean mIsEnemyFleetViewEnabled;
    private ViewState mViewState;
 
    @Override
@@ -125,7 +120,6 @@ public class GameActivity extends Activity implements GameView
    private void setup(final Bundle savedInstanceState)
    {
       mViewState = new ViewState();
-      mBtnAnim = AnimationUtils.loadAnimation(this, R.anim.grow);
       mShotClockView = (TextView) findViewById(R.id.shot_clock);
 
       ActionBar mActionBar = getActionBar();
@@ -148,6 +142,7 @@ public class GameActivity extends Activity implements GameView
       }
 
       mEnemyFleetView = (EnemyFleetView) findViewById(R.id.enemy_fleet_view);
+      mEnemyFleetView.setPresenter(mGamePresenter);
       mViewState.fromBundle(savedInstanceState);
       applyViewState(mViewState);
       mGamePresenter.initialize((OwnFleetView) findViewById(R.id.own_fleet_view), mEnemyFleetView);
@@ -247,41 +242,9 @@ public class GameActivity extends Activity implements GameView
    @Override
    public void setEnemyFleetViewEnabled(boolean enable, boolean newGame)
    {
-      mIsEnemyFleetViewEnabled = enable;
       mViewState.mEnemyFleetEnabled = enable;
       mEnemyFleetView.setEnabled(enable, newGame);
    }
-
-   public void fleetViewReady(final AbstractFleetView fleetView)
-   {
-      Log.d(LOG_TAG, "fleetViewReady()");
-
-      if (fleetView instanceof EnemyFleetView) {
-         mGamePresenter.setEnemyFleetModelUpdateListener();
-         return;
-      }
-
-      if (fleetView instanceof OwnFleetView) {
-         mGamePresenter.setOwnFleetModelUpdateListener();
-      }
-   }
-
-   public View.OnClickListener getGridButtonHandler()
-   {
-      return mGridButtonHandler;
-   }
-
-   private View.OnClickListener mGridButtonHandler = new View.OnClickListener()
-   {
-      @Override
-      public void onClick(final View view)
-      {
-         if (mIsEnemyFleetViewEnabled) {
-            view.startAnimation(mBtnAnim);
-            mGamePresenter.shoot(view.getId());
-         }
-      }
-   };
 
    private class ViewState
    {
@@ -314,5 +277,4 @@ public class GameActivity extends Activity implements GameView
          }
       }
    }
-
 }

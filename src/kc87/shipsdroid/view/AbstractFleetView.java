@@ -2,6 +2,8 @@ package kc87.shipsdroid.view;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Looper;
 import android.util.AttributeSet;
@@ -14,7 +16,6 @@ import android.widget.Button;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
-import kc87.shipsdroid.GameActivity;
 import kc87.shipsdroid.R;
 import kc87.shipsdroid.model.AbstractFleetModel;
 import kc87.shipsdroid.model.SeaArea;
@@ -26,36 +27,30 @@ public abstract class AbstractFleetView extends TableLayout implements AbstractF
 {
    private static final String LOG_TAG = "AbstractFleetView";
    private static final int DEFAULT_BOARD_SIZE = 300;
-   private volatile boolean isEnabled = true;
-   private View.OnClickListener mGridButtonHandler = null;
+   private static final int SCALE_TEXT_SIZE_FACTOR = 25;
+   private TypedArray mAttributesArray;
+   private TextView[] mScaleViews;
 
    protected static final int DIM = SeaArea.DIM;
-   protected Button[][] gridButtons = new Button[DIM][DIM];
+   protected Button[][] mGridButtons = new Button[DIM][DIM];
    protected Context mContext;
    protected Animation mFadeInAnimation;
    protected Animation mFadeOutAnimation;
+   protected Animation[] mFlipAnimation;
+   protected Animation[] mSplashAnimation;
    protected Map<String, Drawable> mDrawableMap = new HashMap<>();
-
+   protected volatile boolean mIsEnabled = true;
+   protected View.OnClickListener mGridButtonHandler = null;
 
    public AbstractFleetView(Context context, AttributeSet attrs)
    {
       super(context, attrs);
       mContext = context;
-      mFadeInAnimation = AnimationUtils.loadAnimation(mContext, R.anim.fade_in);
-      mFadeOutAnimation = AnimationUtils.loadAnimation(mContext, R.anim.fade_out);
-      mDrawableMap.put("WATER", mContext.getResources().getDrawable(R.drawable.water));
-      mDrawableMap.put("SHIP", mContext.getResources().getDrawable(R.drawable.ship));
-      mDrawableMap.put("MISS", mContext.getResources().getDrawable(R.drawable.miss));
-      mDrawableMap.put("HIT", mContext.getResources().getDrawable(R.drawable.hit));
-      mDrawableMap.put("DESTROYED", mContext.getResources().getDrawable(R.drawable.destroyed));
-      mDrawableMap.put("DISABLED_BOARD", mContext.getResources().getDrawable(R.drawable.gray_board_bg));
-      mDrawableMap.put("ENABLED_BOARD", mContext.getResources().getDrawable(R.drawable.green_board_bg));
-      // TODO: This is UGLY! Fix this!!
-      mGridButtonHandler = ((GameActivity)mContext).getGridButtonHandler();
+      mAttributesArray = context.getTheme().obtainStyledAttributes(attrs, R.styleable.AbstractFleetView, 0, 0);
    }
 
    /*
-    * Force square shape
+    * Force square shape of the board
     */
 
    @Override
@@ -86,6 +81,7 @@ public abstract class AbstractFleetView extends TableLayout implements AbstractF
    protected void onFinishInflate()
    {
       super.onFinishInflate();
+      setupFleetView();
    }
 
    @Override
@@ -95,7 +91,7 @@ public abstract class AbstractFleetView extends TableLayout implements AbstractF
       super.onSizeChanged(w,h,oldw,oldh);
 
       if(oldh+oldw == 0){
-        setupFleetView(Math.min(w,h));
+         setScaleTextSize(w > h ? h : w);
       }
    }
 
@@ -130,7 +126,8 @@ public abstract class AbstractFleetView extends TableLayout implements AbstractF
    public void onPartialUpdate(final AbstractFleetModel model, final int i, final int j, final int flag)
    {
       if (flag != AbstractFleetModel.AGAIN) {
-         if (flag == AbstractFleetModel.MISS || flag == AbstractFleetModel.HIT) {
+         if (flag == AbstractFleetModel.MISS || flag == AbstractFleetModel.HIT ||
+                 flag == AbstractFleetModel.DESTROYED) {
             updatePartialView(model, i, j);
          } else {
             onTotalUpdate(model);
@@ -158,11 +155,11 @@ public abstract class AbstractFleetView extends TableLayout implements AbstractF
 
    public void setEnabled(final boolean enable, final boolean newGame)
    {
-      if (!newGame && isEnabled == enable) {
+      if (!newGame && mIsEnabled == enable) {
          return;
       }
 
-      isEnabled = enable;
+      mIsEnabled = enable;
 
       if (Looper.getMainLooper().getThread() == Thread.currentThread()) {
          setEnabledOnUi(enable);
@@ -178,20 +175,56 @@ public abstract class AbstractFleetView extends TableLayout implements AbstractF
       }
    }
 
+   protected void animateTile(final Button tile,final String drawableMapKey,final Animation[] inOutAnimation)
+   {
+      tile.postOnAnimationDelayed(new Runnable()
+      {
+         @Override
+         public void run()
+         {
+            tile.setBackground(mDrawableMap.get(drawableMapKey));
+            tile.startAnimation(inOutAnimation[1]);
+         }
+      },200);
+
+      tile.startAnimation(inOutAnimation[0]);
+   }
+
+
    private void setEnabledOnUi(final boolean enable)
    {
       startAnimation(!enable ? mFadeOutAnimation : mFadeInAnimation);
    }
 
-   private void setupFleetView(final int pixelSize)
+   private void setupFleetView()
    {
       Log.d(LOG_TAG, "setupFleetView()");
 
-      final float scaledDensity = mContext.getResources().getDisplayMetrics().scaledDensity;
+      mFlipAnimation = new Animation[2];
+      mSplashAnimation = new Animation[2];
 
-      gridButtons = new Button[DIM][DIM];
+      mFlipAnimation[0] = AnimationUtils.loadAnimation(mContext, R.anim.shrink_x);
+      mFlipAnimation[1] = AnimationUtils.loadAnimation(mContext, R.anim.grow_x);
+      mSplashAnimation[0] = AnimationUtils.loadAnimation(mContext, R.anim.shrink);
+      mSplashAnimation[1] = AnimationUtils.loadAnimation(mContext, R.anim.grow);
 
-      for (int i = 0, index = 0; i < getChildCount(); i++) {
+      mFadeInAnimation = AnimationUtils.loadAnimation(mContext, R.anim.fade_in);
+      mFadeOutAnimation = AnimationUtils.loadAnimation(mContext, R.anim.fade_out);
+
+      mDrawableMap.put("WATER",mAttributesArray.getDrawable(R.styleable.AbstractFleetView_waterTile));
+      mDrawableMap.put("SHIP",mAttributesArray.getDrawable(R.styleable.AbstractFleetView_shipTile));
+      mDrawableMap.put("HIT",mAttributesArray.getDrawable(R.styleable.AbstractFleetView_hitTile));
+      mDrawableMap.put("MISS",mAttributesArray.getDrawable(R.styleable.AbstractFleetView_missTile));
+      mDrawableMap.put("DESTROYED", mAttributesArray.getDrawable(R.styleable.AbstractFleetView_destroyedTile));
+
+      int scaleTextColor = mAttributesArray.getColor(R.styleable.AbstractFleetView_scaleTextColor,0);
+
+      mAttributesArray.recycle();
+
+      mGridButtons = new Button[DIM][DIM];
+      mScaleViews = new TextView[4*DIM];
+
+      for (int i = 0, k = 0, index = 0; i < getChildCount(); i++) {
          View child = getChildAt(i);
          if (child instanceof TableRow) {
             for (int j = 0; j < ((ViewGroup) child).getChildCount(); j++) {
@@ -202,32 +235,31 @@ public abstract class AbstractFleetView extends TableLayout implements AbstractF
                   Button gridButton = (Button) childOfChild;
                   gridButton.setId(index);
                   gridButton.setOnClickListener(mGridButtonHandler);
-                  gridButtons[col][row] = gridButton;
+                  gridButton.setBackground(mDrawableMap.get("WATER"));
+                  mGridButtons[col][row] = gridButton;
                   index++;
+                  continue;
                }
+               // Collect all scale text views so we can adjust the size later
                if (childOfChild instanceof TextView) {
-                  TextView scaleText = (TextView) childOfChild;
-                  scaleText.setTextSize(pixelSize / (25 * scaledDensity));
+                  TextView scaleTextView = (TextView) childOfChild;
+                  scaleTextView.setTextColor(scaleTextColor);
+                  mScaleViews[k++] = scaleTextView;
                }
             }
          }
       }
-
-      resetSeaGrid();
-
-      ((GameActivity)mContext).fleetViewReady(this);
    }
 
-
-   public void resetSeaGrid()
+   private void setScaleTextSize(final int pixelSize)
    {
-      for (int j = 0; j < DIM; j++) {
-         for (int i = 0; i < DIM; i++) {
-            gridButtons[i][j].setBackground(mDrawableMap.get("WATER"));
-         }
+      Log.d(LOG_TAG, "setScaleTextSize():"+pixelSize);
+      final float scaledDensity = mContext.getResources().getDisplayMetrics().scaledDensity;
+
+      for(TextView scaleView: mScaleViews){
+         scaleView.setTextSize(pixelSize / (SCALE_TEXT_SIZE_FACTOR * scaledDensity));
       }
    }
-
 
    private String specModeToString(int mode)
    {

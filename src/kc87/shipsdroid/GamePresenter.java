@@ -34,6 +34,7 @@ public class GamePresenter
    public void onResume()
    {
       Log.d(LOG_TAG, "onResume()");
+      setFleetModelUpdateListener();
       mGameEngine.setHidden(false);
    }
 
@@ -67,10 +68,10 @@ public class GamePresenter
       mGameEngine.getP2pService().start();
    }
 
-   public void shoot(final int buttonIndex)
+   public void enemyFleetViewOnClick(final int tileIndex)
    {
-      final int i = buttonIndex % SeaArea.DIM;
-      final int j = buttonIndex / SeaArea.DIM;
+      final int i = tileIndex % SeaArea.DIM;
+      final int j = tileIndex / SeaArea.DIM;
 
       mGameEngine.shoot(i, j);
    }

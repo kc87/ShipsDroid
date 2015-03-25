@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="AbstractFleetView">
+        <attr name="waterTile" format="reference" />
+        <attr name="shipTile" format="reference" />
+        <attr name="hitTile" format="reference" />
+        <attr name="missTile" format="reference" />
+        <attr name="destroyedTile" format="reference" />
+        <attr name="scaleTextColor" format="color" />
+    </declare-styleable>
+</resources>

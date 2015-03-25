@@ -43,8 +43,6 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
    public GameEngine(final Application app)
    {
       mApplication = app;
-      mShotClock = new ShotClock();
-      mShotClock.setListener(this);
       startUp();
    }
 
@@ -130,6 +128,8 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
    public void startUp()
    {
       if(!mIsServiceBound) {
+         mShotClock = new ShotClock();
+         mShotClock.setListener(this);
          ownFleetModel = new OwnFleetModel();
          enemyFleetModel = new EnemyFleetModel();
          mApplication.bindService(new Intent(mApplication, P2pService.class), this, Context.BIND_AUTO_CREATE);
@@ -139,7 +139,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
 
    public void shutDown()
    {
-      mShotClock.stop();
+      //mShotClock.stop();
       mShotClock.shutdown();
       Message quitMsg = new Message();
       quitMsg.TYPE = Message.CTRL;
@@ -150,6 +150,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       mIsServiceBound = false;
       ownFleetModel = null;
       enemyFleetModel = null;
+      mShotClock = null;
    }
 
    public void showMsg(final int resourceId)
