@@ -56,9 +56,6 @@ public class OwnFleetModel extends AbstractFleetModel
    public void placeNewFleet()
    {
       while (createFleet() < NUMBER_OF_SHIPS) ;
-      if (listener != null) {
-         listener.onTotalUpdate(this);
-      }
    }
 
    private int createFleet()

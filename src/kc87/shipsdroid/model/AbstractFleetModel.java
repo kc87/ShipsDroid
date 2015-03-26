@@ -14,16 +14,10 @@ public abstract class AbstractFleetModel
    protected int shipsDestroyed = 0;
    protected ModelUpdateListener listener = null;
 
-   public AbstractFleetModel()
-   {
-   }
 
    public void setModelUpdateListener(final ModelUpdateListener listener)
    {
       this.listener = listener;
-      if(listener != null){
-         triggerTotalUpdate();
-      }
    }
 
    public int getShipsLeft()

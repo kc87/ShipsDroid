@@ -1,6 +1,5 @@
 package kc87.shipsdroid;
 
-import android.content.Context;
 import android.util.Log;
 import kc87.shipsdroid.controller.GameEngine;
 import kc87.shipsdroid.model.SeaArea;
@@ -78,28 +77,17 @@ public class GamePresenter
 
    public void showToast(final int resourceId)
    {
-      final Context ctx = (Context)mGameActivityView;
-      Utils.showToast(ctx,resourceId);
+      mGameActivityView.showToast(resourceId);
    }
 
    public void showToast(final String toastMsg)
    {
-      final Context ctx = (Context)mGameActivityView;
-      Utils.showToast(ctx,toastMsg);
+      mGameActivityView.showToast(toastMsg);
    }
 
    public void showOkDialog(final int resourceId)
    {
-      final Context ctx = (Context)mGameActivityView;
-      Utils.showOkMsg(ctx, resourceId, null);
-   }
-
-   public void closeOkDialog()
-   {
-      if(Utils.sIsDialogOpen){
-         final Context ctx = (Context)mGameActivityView;
-         Utils.closeOkMsg(ctx);
-      }
+      mGameActivityView.showOkDialog(resourceId);
    }
 
    public void executeMenuAction(final int actionId)
@@ -192,6 +180,7 @@ public class GamePresenter
       if(mGameEngine.getEnemyModel() != null)
       {
          mGameEngine.getEnemyModel().setModelUpdateListener(enemyFleetModelUpdateListener);
+         mGameEngine.getEnemyModel().triggerTotalUpdate();
       }
    }
 
@@ -200,6 +189,7 @@ public class GamePresenter
       if(mGameEngine.getOwnModel() != null)
       {
          mGameEngine.getOwnModel().setModelUpdateListener(ownFleetModelUpdateListener);
+         mGameEngine.getOwnModel().triggerTotalUpdate();
       }
    }
 

@@ -1,6 +1,6 @@
 package kc87.shipsdroid.controller.state;
 
-
+import kc87.shipsdroid.R;
 import kc87.shipsdroid.controller.GameEngine;
 import kc87.shipsdroid.p2p.Message;
 
@@ -17,13 +17,13 @@ public class Paused extends GameStateAdapter
    @Override
    public void newGame()
    {
-      //Utils.showOkMsg(mGameEngine.getContext(), R.string.abort_game_first_msg, null);
+      mGameEngine.showDialog(R.string.abort_game_first_msg);
    }
 
    @Override
    public void pauseGame()
    {
-      //Utils.showOkMsg(mGameEngine.getContext(), R.string.game_already_paused, null);
+      mGameEngine.showDialog(R.string.game_already_paused);
    }
 
    @Override

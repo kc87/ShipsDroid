@@ -9,7 +9,6 @@ import android.os.IBinder;
 import android.util.Log;
 import kc87.shipsdroid.GamePresenter;
 import kc87.shipsdroid.R;
-import kc87.shipsdroid.Utils;
 import kc87.shipsdroid.controller.state.Disconnected;
 import kc87.shipsdroid.controller.state.GameState;
 import kc87.shipsdroid.controller.state.Paused;
@@ -153,6 +152,14 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       mShotClock = null;
    }
 
+
+   public void showDialog(final int resourceId)
+   {
+      if(mGamePresenter != null) {
+         mGamePresenter.showOkDialog(resourceId);
+      }
+   }
+
    public void showMsg(final int resourceId)
    {
       if(mGamePresenter != null) {
@@ -180,7 +187,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
          }
       }
 
-      if (Utils.sIsDialogOpen || mIsHidden) {
+      if (/*Utils.sIsDialogOpen ||*/ mIsHidden) {
          Log.d(LOG_TAG, "Open Dialog: Message ignored!");
          Message hiddenMsg = new Message();
          hiddenMsg.TYPE = Message.CTRL;
@@ -257,9 +264,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                   setPlayerEnabled(true, false);
                   mShotClock.stop();
                   setState(new PeerReady(this));
-                  if(mGamePresenter != null) {
-                     mGamePresenter.showOkDialog(R.string.game_lose_msg);
-                  }
+                  showDialog(R.string.game_lose_msg);
                   return;
                }
 
@@ -301,9 +306,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
                      if (enemyFleetModel.isFleetDestroyed()) {
                         setScore(ownFleetModel.getShipsLeft(), 0);
                         currentState.finishGame();
-                        if(mGamePresenter != null) {
-                           mGamePresenter.showOkDialog(R.string.game_win_msg);
-                        }
+                        showDialog(R.string.game_win_msg);
                         return;
                      }
 
@@ -361,9 +364,12 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
    {
       ownFleetModel = new OwnFleetModel();
       enemyFleetModel = new EnemyFleetModel();
+      ownFleetModel.placeNewFleet();
 
       mGamePresenter.setFleetModelUpdateListener();
-      ownFleetModel.placeNewFleet();
+
+      //ownFleetModel.triggerTotalUpdate();
+      //enemyFleetModel.triggerTotalUpdate();
 
       setScore(AbstractFleetModel.NUMBER_OF_SHIPS, AbstractFleetModel.NUMBER_OF_SHIPS);
       setPlayerEnabled(myTurnFlag, true);

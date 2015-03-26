@@ -4,8 +4,10 @@ package kc87.shipsdroid;
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import kc87.shipsdroid.view.EnemyFleetView;
 import kc87.shipsdroid.view.OwnFleetView;
 
@@ -26,6 +29,8 @@ public class GameActivity extends Activity implements GameView
 
    private GamePresenter mGamePresenter;
    private Menu mMenu;
+   private AlertDialog mOkDialog;
+   private Toast mMsgToast;
    private EnemyFleetView mEnemyFleetView;
    private TextView mShotClockView;
    private TextView mEnemyShipsView;
@@ -70,7 +75,6 @@ public class GameActivity extends Activity implements GameView
    {
       Log.d(LOG_TAG, "onPause()");
       super.onPause();
-      Utils.closeOkMsg(this);
       mGamePresenter.onPause(isChangingConfigurations());
    }
 
@@ -78,6 +82,9 @@ public class GameActivity extends Activity implements GameView
    protected void onDestroy()
    {
       Log.d(LOG_TAG, "onDestroy()");
+      if(mOkDialog.isShowing()){
+         mOkDialog.cancel();
+      }
       mGamePresenter.onDestroy(isChangingConfigurations());
       super.onDestroy();
    }
@@ -121,6 +128,11 @@ public class GameActivity extends Activity implements GameView
    {
       mViewState = new ViewState();
       mShotClockView = (TextView) findViewById(R.id.shot_clock);
+      mMsgToast = Toast.makeText(this,"HuiBoo",Toast.LENGTH_LONG);
+      mOkDialog = new AlertDialog.Builder(this).create();
+      mOkDialog.setTitle("ShipsDroid");
+      mOkDialog.setCancelable(false);
+
 
       ActionBar mActionBar = getActionBar();
 
@@ -246,6 +258,48 @@ public class GameActivity extends Activity implements GameView
       mEnemyFleetView.setEnabled(enable, newGame);
    }
 
+   @Override
+   public void showToast(final int resourceId)
+   {
+      showToast(getString(resourceId));
+   }
+
+   @Override
+   public void showToast(final String toastMsg)
+   {
+      runOnUiThread(new Runnable()
+      {
+         @Override
+         public void run()
+         {
+            mMsgToast.setDuration(Toast.LENGTH_LONG);
+            mMsgToast.setText(toastMsg);
+            mMsgToast.show();
+         }
+      });
+   }
+
+   @Override
+   public void showOkDialog(final int resourceId)
+   {
+      showOkDialog(getString(resourceId));
+   }
+
+   @Override
+   public void showOkDialog(final String okMsg)
+   {
+      runOnUiThread(new Runnable()
+      {
+         @Override
+         public void run()
+         {
+            mOkDialog.setButton(DialogInterface.BUTTON_NEUTRAL, "Ok", (DialogInterface.OnClickListener) null);
+            mOkDialog.setMessage(okMsg);
+            mOkDialog.show();
+         }
+      });
+   }
+
    private class ViewState
    {
       public String mEnemyScore = "0";
@@ -267,7 +321,7 @@ public class GameActivity extends Activity implements GameView
 
       public void fromBundle(final Bundle viewBundle)
       {
-         if(viewBundle != null) {
+         if (viewBundle != null) {
             mVisibilityList = viewBundle.getBooleanArray("menu_item_visibility");
             mShotClockValue = viewBundle.getString("shot_clock");
             mStateBgResourceId = viewBundle.getInt("state_bg_id");
