@@ -10,7 +10,6 @@ public class ShotClock
    private Thread shotClockThread = null;
    private volatile AtomicInteger timeout = new AtomicInteger(TIMEOUT);
    private volatile AtomicBoolean isStopped = new AtomicBoolean(false);
-   private volatile boolean mQuitFlag;
    private final Object waitLock = new Object();
    private Listener mListener = null;
 
