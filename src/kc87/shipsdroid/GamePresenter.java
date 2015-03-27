@@ -2,6 +2,7 @@ package kc87.shipsdroid;
 
 import android.util.Log;
 import kc87.shipsdroid.controller.GameEngine;
+import kc87.shipsdroid.model.AbstractFleetModel;
 import kc87.shipsdroid.model.SeaArea;
 import kc87.shipsdroid.p2p.P2pConnector;
 import kc87.shipsdroid.model.AbstractFleetModel.ModelUpdateListener;
@@ -33,7 +34,7 @@ public class GamePresenter
    public void onResume()
    {
       Log.d(LOG_TAG, "onResume()");
-      setFleetModelUpdateListener();
+      setFleetModelUpdateListeners();
       mGameEngine.setHidden(false);
    }
 
@@ -55,7 +56,7 @@ public class GamePresenter
       Log.d(LOG_TAG, "onDestroy()");
       enemyFleetModelUpdateListener = null;
       ownFleetModelUpdateListener = null;
-      setFleetModelUpdateListener();
+      setFleetModelUpdateListeners();
       mGameEngine.setPresenter(null);
       if(!isChangingConfigurations) {
          mGameEngine.shutDown();
@@ -89,6 +90,19 @@ public class GamePresenter
    {
       mGameActivityView.showOkDialog(resourceId);
    }
+
+   public void onDialogShow()
+   {
+      Log.d(LOG_TAG,"onDialogShow()");
+      mGameEngine.setHidden(true);
+   }
+
+   public void onDialogOkClick()
+   {
+      Log.d(LOG_TAG,"onDialogOkClick()");
+      mGameEngine.setHidden(false);
+   }
+
 
    public void executeMenuAction(final int actionId)
    {
@@ -148,7 +162,7 @@ public class GamePresenter
       }
    }
 
-   public void updateP2pState(final P2pConnector.State p2pState)
+   public void updateP2pState(final P2pConnector.State p2pState,final String peerName)
    {
       Log.d(LOG_TAG,"updateP2pState(): "+p2pState.name());
 
@@ -160,47 +174,38 @@ public class GamePresenter
          case CONNECTING:
             //case UNREACHABLE:
             mGameActivityView.updateP2pState(R.drawable.state_yellow_bg);
-            //showToast("Trying '" + mP2pService.getPeerName() + "'...");
-            showToast("Trying to connect...");
+            showToast("Trying peer '"+peerName+"'...");
             break;
          case DISCONNECTED:
             mGameActivityView.updateP2pState(R.drawable.state_red_bg);
+            //showToast("Disconnected");
             break;
          case CONNECTED:
             mGameActivityView.updateP2pState(R.drawable.state_green_bg);
-            //showToast("Connected to '" + mP2pService.getPeerName() + "'");
-            showToast("Connected!");
+            showToast("Connected to '" + peerName + "'");
             break;
       }
    }
 
-
-   public void setEnemyFleetModelUpdateListener()
+   public void setFleetModelUpdateListeners()
    {
-      if(mGameEngine.getEnemyModel() != null)
-      {
-         mGameEngine.getEnemyModel().setModelUpdateListener(enemyFleetModelUpdateListener);
-         mGameEngine.getEnemyModel().triggerTotalUpdate();
-      }
-   }
-
-   public void setOwnFleetModelUpdateListener()
-   {
-      if(mGameEngine.getOwnModel() != null)
-      {
-         mGameEngine.getOwnModel().setModelUpdateListener(ownFleetModelUpdateListener);
-         mGameEngine.getOwnModel().triggerTotalUpdate();
-      }
-   }
-
-   public void setFleetModelUpdateListener()
-   {
-      setEnemyFleetModelUpdateListener();
-      setOwnFleetModelUpdateListener();
+      setFleetModelUpdateListener(mGameEngine.getOwnModel(),ownFleetModelUpdateListener);
+      setFleetModelUpdateListener(mGameEngine.getEnemyModel(),enemyFleetModelUpdateListener);
    }
 
    public void setPlayerEnabled(final boolean enable, final boolean newGame)
    {
       mGameActivityView.setEnemyFleetViewEnabled(enable, newGame);
+   }
+
+   private void setFleetModelUpdateListener(final AbstractFleetModel model, final ModelUpdateListener listener)
+   {
+      if(model != null)
+      {
+         model.setModelUpdateListener(listener);
+         if(listener != null) {
+            model.triggerTotalUpdate();
+         }
+      }
    }
 }

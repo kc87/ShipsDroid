@@ -132,7 +132,23 @@ public class GameActivity extends Activity implements GameView
       mOkDialog = new AlertDialog.Builder(this).create();
       mOkDialog.setTitle("ShipsDroid");
       mOkDialog.setCancelable(false);
+      mOkDialog.setButton(DialogInterface.BUTTON_NEUTRAL, "Ok", new DialogInterface.OnClickListener()
+      {
+         @Override
+         public void onClick(DialogInterface dialog, int which)
+         {
+            mGamePresenter.onDialogOkClick();
+         }
+      });
 
+      mOkDialog.setOnShowListener(new DialogInterface.OnShowListener()
+      {
+         @Override
+         public void onShow(DialogInterface dialog)
+         {
+            mGamePresenter.onDialogShow();
+         }
+      });
 
       ActionBar mActionBar = getActionBar();
 
@@ -293,7 +309,6 @@ public class GameActivity extends Activity implements GameView
          @Override
          public void run()
          {
-            mOkDialog.setButton(DialogInterface.BUTTON_NEUTRAL, "Ok", (DialogInterface.OnClickListener) null);
             mOkDialog.setMessage(okMsg);
             mOkDialog.show();
          }
