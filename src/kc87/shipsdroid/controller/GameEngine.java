@@ -187,7 +187,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
          }
       }
 
-      if (/*Utils.sIsDialogOpen ||*/ mIsHidden) {
+      if (mIsHidden) {
          Log.d(LOG_TAG, "Open Dialog: Message ignored!");
          Message hiddenMsg = new Message();
          hiddenMsg.TYPE = Message.CTRL;
@@ -355,7 +355,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       }
 
       if(mGamePresenter != null) {
-         mGamePresenter.updateP2pState(newState);
+         mGamePresenter.updateP2pState(newState,mP2pService.getPeerName());
       }
    }
 
@@ -366,10 +366,7 @@ public final class GameEngine implements P2pService.Listener, ShotClock.Listener
       enemyFleetModel = new EnemyFleetModel();
       ownFleetModel.placeNewFleet();
 
-      mGamePresenter.setFleetModelUpdateListener();
-
-      //ownFleetModel.triggerTotalUpdate();
-      //enemyFleetModel.triggerTotalUpdate();
+      mGamePresenter.setFleetModelUpdateListeners();
 
       setScore(AbstractFleetModel.NUMBER_OF_SHIPS, AbstractFleetModel.NUMBER_OF_SHIPS);
       setPlayerEnabled(myTurnFlag, true);
